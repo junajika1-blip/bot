@@ -131,7 +131,50 @@ async function safeCloseMikrotik(api) {
 }
 
 // ==========================================
-// 5. MESSAGE HANDLER (PUBLIC ACCESS)
+// 5. ANTRIAN (QUEUE) - PENYEBAB "SUKA ERROR" KETIKA DIPAKAI BARENGAN
+// ==========================================
+// !cek dan !aktifkan sama-sama pakai koneksi MikroTik + browser Puppeteer.
+// Kalau 2 teknisi jalan BERSAMAAN, resource-nya rebutan dan gampang error/hang.
+// Solusinya: 1 pintu antrian bersama. Yang lagi jalan diproses, yang lain
+// otomatis masuk antrian dan dapat notifikasi, lalu diproses berurutan (FIFO).
+const requestQueue = [];
+let isProcessingQueue = false;
+
+async function enqueueTask(msg, taskFn) {
+    if (isProcessingQueue) {
+        requestQueue.push(taskFn);
+        const posisi = requestQueue.length;
+        try {
+            await msg.reply(
+                `⏳ *Sedang Ada Antrian*\n\n` +
+                `Bot sedang memproses permintaan teknisi lain.\n` +
+                `📋 Permintaan Anda otomatis diproses setelah selesai (nomor antrian: *${posisi}*).`
+            );
+        } catch (e) {}
+        return;
+    }
+
+    isProcessingQueue = true;
+    await jalankanLaluLanjutkanAntrian(taskFn);
+}
+
+async function jalankanLaluLanjutkanAntrian(taskFn) {
+    try {
+        await taskFn();
+    } catch (err) {
+        console.error('❌ Queue Task Error:', err);
+    }
+
+    if (requestQueue.length > 0) {
+        const next = requestQueue.shift();
+        await jalankanLaluLanjutkanAntrian(next);
+    } else {
+        isProcessingQueue = false;
+    }
+}
+
+// ==========================================
+// 6. MESSAGE HANDLER (PUBLIC ACCESS)
 // ==========================================
 client.on('message_create', async (msg) => {
     try {
@@ -170,8 +213,8 @@ client.on('message_create', async (msg) => {
 
             console.log(`\n📨 [REQUEST] Dari: ${msg.from} | Perintah: ${command} ${serverKey} ${username}`);
 
-            if (command === '!cek') await handleCekRedaman(msg, serverKey, username);
-            else if (command === '!aktifkan') await handleAktivasi(msg, serverKey, username);
+            if (command === '!cek') await enqueueTask(msg, () => handleCekRedaman(msg, serverKey, username));
+            else if (command === '!aktifkan') await enqueueTask(msg, () => handleAktivasi(msg, serverKey, username));
         }
 
     } catch (err) {
@@ -181,7 +224,7 @@ client.on('message_create', async (msg) => {
 });
 
 // ==========================================
-// 6. HANDLER CEK REDAMAN
+// 7. HANDLER CEK REDAMAN
 // ==========================================
 async function handleCekRedaman(msg, serverKey, username) {
     let api;
@@ -204,15 +247,27 @@ async function handleCekRedaman(msg, serverKey, username) {
         const mac = rawMac.trim().toLowerCase();
         await msg.reply(`📡 *MAC Ditemukan:*\n\`${mac}\`\n\n_Menyisir OLT di cabang ${targetServer.label}..._`);
 
-        const hasilOlt = await scanSemuaOlt(targetServer.olts, mac);
-        
-        await msg.reply(
-            `📊 *Hasil Cek Redaman OLT*\n\n` +
-            `👤 *Pelanggan:* ${username}\n` +
-            `💻 *Server:* ${targetServer.label}\n` +
-            `🔒 *MAC:* \`${mac}\`\n\n` +
-            `${hasilOlt}`
-        );
+        // ⚡ FIX: begitu salah satu OLT ketemu redaman-nya, LANGSUNG balas ke WA
+        // lewat callback ini. Tidak perlu menunggu OLT lain selesai dicek.
+        const ditemukan = await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => {
+            await msg.reply(
+                `📊 *Hasil Cek Redaman OLT*\n\n` +
+                `👤 *Pelanggan:* ${username}\n` +
+                `💻 *Server:* ${targetServer.label}\n` +
+                `🔒 *MAC:* \`${mac}\`\n` +
+                `${teksHasil}`
+            );
+        });
+
+        if (!ditemukan) {
+            await msg.reply(
+                `📊 *Hasil Cek Redaman OLT*\n\n` +
+                `👤 *Pelanggan:* ${username}\n` +
+                `💻 *Server:* ${targetServer.label}\n` +
+                `🔒 *MAC:* \`${mac}\`\n\n` +
+                `⚠️ ONU tidak ditemukan di OLT manapun pada cabang ini.`
+            );
+        }
 
     } catch (err) {
         await msg.reply(`❌ *Gagal Cek Redaman*\n\n${err.message}`);
@@ -222,7 +277,7 @@ async function handleCekRedaman(msg, serverKey, username) {
 }
 
 // ==========================================
-// 7. HANDLER AKTIVASI
+// 8. HANDLER AKTIVASI
 // ==========================================
 async function handleAktivasi(msg, serverKey, username) {
     let api;
@@ -266,14 +321,26 @@ async function handleAktivasi(msg, serverKey, username) {
             report += `✂️ *MAC OLT:* \`${mac}\`\n\n🔍 _Menyisir OLT otomatis..._`;
             await msg.reply(report);
             
-            const hasilOlt = await scanSemuaOlt(targetServer.olts, mac);
-            await msg.reply(
-                `✨ *RnB Network - Final Report*\n\n` +
-                `👤 *Pelanggan:* ${username}\n` +
-                `💻 *Server:* ${targetServer.label}\n` +
-                `🔒 *MAC OLT:* \`${mac}\`\n\n` +
-                `${hasilOlt}`
-            );
+            // ⚡ FIX: sama seperti !cek, begitu ketemu langsung balas, tidak menunggu OLT lain.
+            const ditemukan = await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => {
+                await msg.reply(
+                    `✨ *RnB Network - Final Report*\n\n` +
+                    `👤 *Pelanggan:* ${username}\n` +
+                    `💻 *Server:* ${targetServer.label}\n` +
+                    `🔒 *MAC OLT:* \`${mac}\`\n` +
+                    `${teksHasil}`
+                );
+            });
+
+            if (!ditemukan) {
+                await msg.reply(
+                    `✨ *RnB Network - Final Report*\n\n` +
+                    `👤 *Pelanggan:* ${username}\n` +
+                    `💻 *Server:* ${targetServer.label}\n` +
+                    `🔒 *MAC OLT:* \`${mac}\`\n\n` +
+                    `⚠️ ONU tidak ditemukan di OLT manapun pada cabang ini.`
+                );
+            }
         } else {
             report += `\n⚠️ _Pengecekan OLT dilewati karena MAC tidak terbaca._`;
             await msg.reply(report);
@@ -286,7 +353,7 @@ async function handleAktivasi(msg, serverKey, username) {
 }
 
 // ==========================================
-// 8. ERROR HANDLING
+// 9. ERROR HANDLING
 // ==========================================
 process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
 process.on('uncaughtException', err => {
