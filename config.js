@@ -92,25 +92,19 @@ module.exports = {
         sukamelang: {
             label: 'Sukamelang',
             mikrotik: {
-                host: '103.191.165.100',
+                host: '103.191.165.126',
                 port: 3150,
                 user: 'berry',
                 pass: 'Subang21'
             },
+            // Urutan array di bawah ini = urutan pengecekan (dari atas ke bawah).
+            // Begitu redaman ketemu di salah satu OLT, sisanya TIDAK dicek lagi.
             olts: [
                 {
-                    type: 'HSAirpo',
-                    label: 'HSAirpo Sukamelang',
-                    ip: '103.191.165.100',
-                    port: 9900,
-                    user: 'root',
-                    pass: 'admin'
-                },
-                {
-                    // Didahulukan sesuai permintaan: 8Pon dicek lebih dulu dari 4Pon
+                    // Didahulukan sesuai permintaan: 8Pon dicek paling pertama
                     type: 'Hioso',
                     label: 'Hioso 8Pon Sukamelang',
-                    ip: '103.191.165.100',
+                    ip: '103.191.165.126',
                     port: 680,
                     user: 'admin',
                     pass: 'admin',
@@ -119,11 +113,32 @@ module.exports = {
                 {
                     type: 'Hioso',
                     label: 'Hioso 4Pon Sukamelang',
-                    ip: '103.191.165.100',
+                    ip: '103.191.165.126',
                     port: 670,
                     user: 'admin',
                     pass: 'admin',
                     iframe: false // Single Login
+                },
+                {
+                    // ✅ OLT BARU. Cara login & cara kerja sama seperti Hioso 4Pon Sukamelang
+                    // (HTTP Basic Auth langsung, single login, tanpa iframe).
+                    // Label sementara pakai alamat IP - silakan ganti kalau ada nama/jumlah PON yang lebih pas.
+                    type: 'Hioso',
+                    label: 'Hioso Sukamelang (103.191.165.100)',
+                    ip: '103.191.165.100',
+                    port: 671,
+                    user: 'admin',
+                    pass: 'admin',
+                    iframe: false // Single Login, sama seperti Hioso 4Pon Sukamelang
+                },
+                {
+                    // Sesuai permintaan: HSAirpo TIDAK dicek duluan, jadi dipindah ke urutan terakhir
+                    type: 'HSAirpo',
+                    label: 'HSAirpo Sukamelang',
+                    ip: '103.191.165.126',
+                    port: 9900,
+                    user: 'root',
+                    pass: 'admin'
                 }
             ]
         }
