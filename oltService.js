@@ -342,75 +342,75 @@ async function cekRedamanHioso(oltConfig, mac) {
 }
 
 // ==========================================
-// 4. SCAN SEMUA OLT
+// 4. RETRY WRAPPER (khusus untuk OLT yang sering error, misal Hioso 8Pon)
 // ==========================================
-async function scanSemuaOlt(oltList, mac) {
-    console.log(`\n========================================`);
-    console.log(`🚀 MULAI SCAN ${oltList.length} OLT...`);
-    console.log(`========================================`);
-    const hasilAkhir = [];
-    const axiosOlts = oltList.filter(o => o.type === 'HSAirpo');
-    const puppeteerOlts = oltList.filter(o => o.type === 'Hioso');
+// Kalau checker mengembalikan {error: ...} (gagal load frame, timeout, dll),
+// itu dianggap MASALAH SEMENTARA -> otomatis dicoba ulang di OLT yang sama,
+// TANPA mengirim pesan error itu ke teknisi. Kalau tetap null (memang tidak
+// ketemu di OLT tsb, bukan error), langsung lanjut ke OLT berikutnya.
+const MAX_RETRY_PER_OLT = 3;   // total percobaan = 1 awal + 3 retry = 4x
+const RETRY_DELAY_MS = 2000;   // jeda antar percobaan
 
-    // ⚡ FIX PERFORMA: sebelumnya kode menunggu SEMUA HSAirpo (axios) selesai
-    // dulu, baru mulai menyisir Hioso (puppeteer) satu-satu. Karena keduanya
-    // independen (device beda, cara cek beda), sekarang dijalankan BERSAMAAN
-    // (Promise.all di level atas) supaya total waktu tunggu = waktu terlama
-    // di antara keduanya, bukan dijumlahkan.
-    const axiosTask = (async () => {
-        if (axiosOlts.length === 0) return [];
-        console.log(`\n⚡ Menjalankan ${axiosOlts.length} HSAirpo secara paralel...`);
-        const axiosPromises = axiosOlts.map(async (olt) => {
-            let hasil = null;
-            if (olt.method === 'cibarola') {
-                hasil = await cekRedamanHSAirpoCibarola(olt, mac);
-            } else {
-                hasil = await cekRedamanHSAirpoAPI(olt, mac);
-            }
-            return { olt, hasil };
-        });
-        return Promise.all(axiosPromises);
-    })();
+async function cekDenganRetry(checkerFn, oltConfig, mac) {
+    let lastError = null;
+    for (let attempt = 1; attempt <= MAX_RETRY_PER_OLT + 1; attempt++) {
+        const hasil = await checkerFn(oltConfig, mac);
 
-    const puppeteerTask = (async () => {
-        const hasilPuppeteer = [];
-        if (puppeteerOlts.length === 0) return hasilPuppeteer;
-        // Hioso tetap berurutan (bukan paralel sesama Hioso) supaya browser
-        // Puppeteer tidak menyala berbarengan terlalu banyak dan membebani server.
-        console.log(`\n🐢 Menjalankan ${puppeteerOlts.length} Hioso secara berurutan...`);
-        for (const olt of puppeteerOlts) {
-            const hasil = await cekRedamanHioso(olt, mac);
-            hasilPuppeteer.push({ olt, hasil });
+        if (!hasil || !hasil.error) {
+            // hasil ketemu ATAU null (memang tidak ada di OLT ini) -> bukan error, tidak perlu diulang
+            return hasil;
         }
-        return hasilPuppeteer;
-    })();
 
-    const [axiosResults, puppeteerResults] = await Promise.all([axiosTask, puppeteerTask]);
-
-    axiosResults.forEach(({ olt, hasil }) => {
-        if (hasil && !hasil.error) {
-            hasilAkhir.push(`\n✅ *${hasil.olt_name}*\n   📉 Redaman: *${hasil.redaman}*\n   📡 Status: ${hasil.status}`);
-        } else if (hasil && hasil.error) {
-            hasilAkhir.push(`\n⚠️ *${olt.label}*: ${hasil.error}`);
+        lastError = hasil.error;
+        console.log(`   🔁 [${oltConfig.label}] Percobaan ${attempt}/${MAX_RETRY_PER_OLT + 1} gagal: ${lastError}`);
+        if (attempt <= MAX_RETRY_PER_OLT) {
+            await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
         }
-    });
-
-    puppeteerResults.forEach(({ olt, hasil }) => {
-        if (hasil && !hasil.error) {
-            hasilAkhir.push(`\n✅ *${hasil.olt_name}*\n   📉 Redaman: *${hasil.redaman}*\n   📡 Status: ${hasil.status}`);
-        } else if (hasil && hasil.error) {
-            hasilAkhir.push(`\n⚠️ *${olt.label}*: ${hasil.error}`);
-        }
-    });
-
-    console.log(`\n========================================`);
-    console.log(`✅ SCAN SELESAI!`);
-    console.log(`========================================\n`);
-
-    if (hasilAkhir.length === 0) {
-        return '⚠️ ONU tidak ditemukan di OLT manapun pada cabang ini.';
     }
-    return hasilAkhir.join('\n');
+    console.log(`   ⛔ [${oltConfig.label}] Tetap gagal setelah ${MAX_RETRY_PER_OLT + 1}x percobaan (${lastError}). Lanjut ke OLT berikutnya (tidak dikirim ke WA).`);
+    return null; // dianggap "tidak ketemu di sini" supaya scanSemuaOlt lanjut ke OLT berikutnya
+}
+
+// ==========================================
+// 5. SCAN SEMUA OLT (berurutan sesuai config, berhenti begitu ketemu)
+// ==========================================
+// oltList : daftar OLT sesuai urutan di config.js (urutan = prioritas cek)
+// mac     : MAC address yang dicari
+// onFound : async callback(teksHasil) - dipanggil SEKALI, begitu redaman ketemu,
+//           supaya bot bisa langsung balas ke WA tanpa menunggu OLT lain selesai.
+// Return  : true kalau ketemu (sudah dibalas lewat onFound), false kalau tidak ketemu sama sekali.
+async function scanSemuaOlt(oltList, mac, onFound) {
+    console.log(`\n========================================`);
+    console.log(`🚀 MULAI SCAN ${oltList.length} OLT (berurutan sesuai prioritas)...`);
+    console.log(`========================================`);
+
+    for (const olt of oltList) {
+        let hasil = null;
+
+        if (olt.type === 'HSAirpo') {
+            hasil = olt.method === 'cibarola'
+                ? await cekDenganRetry(cekRedamanHSAirpoCibarola, olt, mac)
+                : await cekDenganRetry(cekRedamanHSAirpoAPI, olt, mac);
+        } else if (olt.type === 'Hioso') {
+            hasil = await cekDenganRetry(cekRedamanHioso, olt, mac);
+        } else {
+            console.log(`   ⚠️ Tipe OLT tidak dikenal, dilewati: ${olt.type} (${olt.label})`);
+            continue;
+        }
+
+        if (hasil && !hasil.error) {
+            console.log(`\n✅ KETEMU di ${hasil.olt_name}, langsung balas & berhenti (tidak cek OLT lain lagi).`);
+            const teksHasil = `\n✅ *${hasil.olt_name}*\n   📉 Redaman: *${hasil.redaman}*\n   📡 Status: ${hasil.status}`;
+            await onFound(teksHasil);
+            console.log(`========================================\n`);
+            return true;
+        }
+        // hasil null -> memang tidak ada di OLT ini, lanjut cek OLT berikutnya
+    }
+
+    console.log(`\n❌ Tidak ketemu di OLT manapun.`);
+    console.log(`========================================\n`);
+    return false;
 }
 
 module.exports = { scanSemuaOlt };
