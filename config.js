@@ -92,7 +92,7 @@ module.exports = {
         sukamelang: {
             label: 'Sukamelang',
             mikrotik: {
-                host: '103.191.165.126',
+                host: '103.191.165.100',
                 port: 3150,
                 user: 'berry',
                 pass: 'Subang21'
@@ -104,7 +104,7 @@ module.exports = {
                     // Didahulukan sesuai permintaan: 8Pon dicek paling pertama
                     type: 'Hioso',
                     label: 'Hioso 8Pon Sukamelang',
-                    ip: '103.191.165.126',
+                    ip: '103.191.165.100',
                     port: 680,
                     user: 'admin',
                     pass: 'admin',
@@ -113,7 +113,7 @@ module.exports = {
                 {
                     type: 'Hioso',
                     label: 'Hioso 4Pon Sukamelang',
-                    ip: '103.191.165.126',
+                    ip: '103.191.165.100',
                     port: 670,
                     user: 'admin',
                     pass: 'admin',
@@ -135,7 +135,7 @@ module.exports = {
                     // Sesuai permintaan: HSAirpo TIDAK dicek duluan, jadi dipindah ke urutan terakhir
                     type: 'HSAirpo',
                     label: 'HSAirpo Sukamelang',
-                    ip: '103.191.165.126',
+                    ip: '103.191.165.100',
                     port: 9900,
                     user: 'root',
                     pass: 'admin'
