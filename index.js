@@ -43,8 +43,10 @@ client.on('ready', () => {
     console.log('🔓 PUBLIC ACCESS: Siap melayani siapa saja');
     console.log('================================');
 });
-client.on('disconnected', (reason) => {
+client.on('disconnected', async (reason) => {
     console.warn('⚠️ BOT DISCONNECTED:', reason);
+    // Hancurkan instance lama agar tidak bentrok saat initialize ulang
+    await client.destroy().catch(() => {}); 
     setTimeout(() => client.initialize().catch(console.error), 5000);
 });
 
