@@ -4,7 +4,9 @@
   "description": "Bot WhatsApp PPPoE dan OLT Multi-Server RnB Network",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"No tests specified\" && exit 0",
+    "postinstall": "npx puppeteer browsers install chrome"
   },
   "dependencies": {
     "axios": "^1.6.0",
