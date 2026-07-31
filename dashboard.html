@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RnBNET Dashboard - Cek Redaman & Aktivasi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .result h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .result-item {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .result-value {
+            color: #333;
+            text-align: right;
+            word-break: break-all;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📡 RnBNET Dashboard</h1>
+            <p>Cek Redaman OLT & Aktivasi Pelanggan</p>
+        </div>
+        
+        <!-- CEK REDAMAN -->
+        <div class="card">
+            <h2>🔍 Cek Redaman OLT</h2>
+            <form id="formCek">
+                <div class="form-group">
+                    <label>Pilih Server</label>
+                    <select id="serverCek" required>
+                        <option value="">-- Pilih Server --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Username Pelanggan</label>
+                    <input type="text" id="usernameCek" placeholder="Contoh: liacahyani" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btnCek">
+                    <span>🔍 Cek Redaman</span>
+                </button>
+            </form>
+            <div id="resultCek" class="result"></div>
+        </div>
+        
+        <!-- AKTIVASI -->
+        <div class="card">
+            <h2>⚡ Aktivasi / Open Isolir</h2>
+            <form id="formAktivasi">
+                <div class="form-group">
+                    <label>Pilih Server</label>
+                    <select id="serverAktivasi" required>
+                        <option value="">-- Pilih Server --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Username Pelanggan</label>
+                    <input type="text" id="usernameAktivasi" placeholder="Contoh: liacahyani" required>
+                </div>
+                <button type="submit" class="btn btn-secondary" id="btnAktivasi">
+                    <span>⚡ Aktivasi Sekarang</span>
+                </button>
+            </form>
+            <div id="resultAktivasi" class="result"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Load daftar server saat halaman dimuat
+        async function loadServers() {
+            try {
+                const res = await fetch('/api/servers');
+                const data = await res.json();
+                
+                const selectCek = document.getElementById('serverCek');
+                const selectAktivasi = document.getElementById('serverAktivasi');
+                
+                data.servers.forEach(server => {
+                    const option1 = new Option(server.label, server.key);
+                    const option2 = new Option(server.label, server.key);
+                    selectCek.add(option1);
+                    selectAktivasi.add(option2);
+                });
+            } catch (err) {
+                console.error('Gagal load servers:', err);
+            }
+        }
+        
+        // Handle form Cek Redaman
+        document.getElementById('formCek').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const serverKey = document.getElementById('serverCek').value;
+            const username = document.getElementById('usernameCek').value.trim();
+            const btn = document.getElementById('btnCek');
+            const resultDiv = document.getElementById('resultCek');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"></div> <span>Memproses...</span>';
+            resultDiv.classList.remove('show');
+            
+            try {
+                const res = await fetch('/api/cek-redaman', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ serverKey, username })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result show success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Hasil Cek Redaman</h3>
+                        <div class="result-item">
+                            <span class="result-label">Pelanggan:</span>
+                            <span class="result-value">${data.data.username}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Server:</span>
+                            <span class="result-value">${data.data.server}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">MAC Address:</span>
+                            <span class="result-value"><code>${data.data.mac}</code></span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">OLT:</span>
+                            <span class="result-value">${data.data.olt}</span>
+                        </div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Gagal cek redaman');
+                }
+            } catch (err) {
+                resultDiv.className = 'result show error';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🔍 Cek Redaman</span>';
+            }
+        });
+        
+        // Handle form Aktivasi
+        document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const serverKey = document.getElementById('serverAktivasi').value;
+            const username = document.getElementById('usernameAktivasi').value.trim();
+            const btn = document.getElementById('btnAktivasi');
+            const resultDiv = document.getElementById('resultAktivasi');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"></div> <span>Memproses...</span>';
+            resultDiv.classList.remove('show');
+            
+            try {
+                const res = await fetch('/api/aktivasi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ serverKey, username })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result show success';
+                    let html = `
+                        <h3>✨ Aktivasi Berhasil</h3>
+                        <div class="result-item">
+                            <span class="result-label">Status:</span>
+                            <span class="result-value"><strong>${data.data.status}</strong></span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Pelanggan:</span>
+                            <span class="result-value">${data.data.username}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Server:</span>
+                            <span class="result-value">${data.data.server}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Paket:</span>
+                            <span class="result-value">${data.data.paket}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">IP:</span>
+                            <span class="result-value">${data.data.ip}</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">MAC:</span>
+                            <span class="result-value"><code>${data.data.mac}</code></span>
+                        </div>
+                    `;
+                    
+                    if (data.data.olt) {
+                        html += `
+                            <div class="result-item">
+                                <span class="result-label">OLT:</span>
+                                <span class="result-value">${data.data.olt}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    resultDiv.innerHTML = html;
+                } else {
+                    throw new Error(data.error || 'Gagal aktivasi');
+                }
+            } catch (err) {
+                resultDiv.className = 'result show error';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>⚡ Aktivasi Sekarang</span>';
+            }
+        });
+        
+        // Init
+        loadServers();
+    </script>
+</body>
+</html>
