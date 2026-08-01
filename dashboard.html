@@ -239,14 +239,30 @@
             font-size: 18px;
         }
 
-        .olt-info {
-            margin-bottom: 10px;
-            padding-left: 20px;
+        .queue-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(245, 87, 108, 0.4);
+            z-index: 1000;
+            max-width: 350px;
+            animation: slideInRight 0.5s ease;
         }
 
-        .olt-info p {
+        .queue-notification h4 {
+            font-size: 16px;
             margin-bottom: 8px;
-            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .queue-notification p {
+            font-size: 14px;
+            opacity: 0.95;
+            line-height: 1.5;
         }
 
         .loading {
@@ -304,6 +320,28 @@
             to {
                 opacity: 1;
                 transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(400px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(400px);
             }
         }
 
@@ -391,6 +429,8 @@
     </div>
     
     <script>
+        let queueCheckInterval;
+        
         async function loadServers() {
             try {
                 const res = await fetch('/api/servers');
@@ -404,6 +444,27 @@
             } catch (err) {
                 console.error('Gagal load servers:', err);
             }
+        }
+        
+        function showQueueNotification(position) {
+            // Hapus notifikasi lama jika ada
+            const existing = document.querySelector('.queue-notification');
+            if (existing) existing.remove();
+            
+            const notification = document.createElement('div');
+            notification.className = 'queue-notification';
+            notification.innerHTML = `
+                <h4> Anda Sedang Antrian</h4>
+                <p>Posisi antrian Anda: <strong>#${position}</strong><br>
+                Mohon tunggu, permintaan akan diproses secara berurutan.</p>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto remove setelah 5 detik
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.5s ease';
+                setTimeout(() => notification.remove(), 500);
+            }, 5000);
         }
         
         document.getElementById('formCek').addEventListener('submit', async (e) => {
@@ -425,10 +486,34 @@
                 });
                 const data = await res.json();
                 
+                // Cek apakah ini response antrian
+                if (data.queued) {
+                    showQueueNotification(data.position);
+                    btn.innerHTML = '<span> Dalam Antrian</span>';
+                    
+                    // Polling setiap 3 detik untuk cek status
+                    queueCheckInterval = setInterval(async () => {
+                        try {
+                            const queueRes = await fetch('/api/queue-status');
+                            const queueData = await queueRes.json();
+                            
+                            if (!queueData.isProcessing || queueData.queueLength === 0) {
+                                clearInterval(queueCheckInterval);
+                                btn.innerHTML = '<span>🔍 Cek Redaman</span>';
+                                btn.disabled = false;
+                            }
+                        } catch (err) {
+                            clearInterval(queueCheckInterval);
+                        }
+                    }, 3000);
+                    
+                    return;
+                }
+                
                 if (data.success) {
                     resultDiv.className = 'result show success';
                     resultDiv.innerHTML = `
-                        <h3> Hasil Cek Redaman OLT</h3>
+                        <h3>📊 Hasil Cek Redaman OLT</h3>
                         <div class="result-item">
                             <span class="result-label">👤 Pelanggan:</span>
                             <span class="result-value">${data.data.username}</span>
@@ -455,8 +540,10 @@
                     <p>${err.message}</p>
                 `;
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>🔍 Cek Redaman</span>';
+                if (!queueCheckInterval) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>🔍 Cek Redaman</span>';
+                }
             }
         });
         
@@ -479,6 +566,29 @@
                 });
                 const data = await res.json();
                 
+                // Cek apakah ini response antrian
+                if (data.queued) {
+                    showQueueNotification(data.position);
+                    btn.innerHTML = '<span>⏳ Dalam Antrian</span>';
+                    
+                    queueCheckInterval = setInterval(async () => {
+                        try {
+                            const queueRes = await fetch('/api/queue-status');
+                            const queueData = await queueRes.json();
+                            
+                            if (!queueData.isProcessing || queueData.queueLength === 0) {
+                                clearInterval(queueCheckInterval);
+                                btn.innerHTML = '<span>⚡ Aktivasi Sekarang</span>';
+                                btn.disabled = false;
+                            }
+                        } catch (err) {
+                            clearInterval(queueCheckInterval);
+                        }
+                    }, 3000);
+                    
+                    return;
+                }
+                
                 if (data.success) {
                     resultDiv.className = 'result show success';
                     let html = `
@@ -500,7 +610,7 @@
                             <span class="result-value">${data.data.server}</span>
                         </div>
                         <div class="result-item">
-                            <span class="result-label"> IP:</span>
+                            <span class="result-label">🌐 IP:</span>
                             <span class="result-value">${data.data.ip}</span>
                         </div>
                         <div class="result-item">
@@ -528,8 +638,10 @@
                     <p>${err.message}</p>
                 `;
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>⚡ Aktivasi Sekarang</span>';
+                if (!queueCheckInterval) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>⚡ Aktivasi Sekarang</span>';
+                }
             }
         });
         
