@@ -8,7 +8,11 @@ const { scanSemuaOlt } = require('./oltService');
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+
+// Serve dashboard.html di root
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🌐 WEB DASHBOARD RUNNING ON PORT ${PORT}`));
