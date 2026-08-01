@@ -156,4 +156,4 @@ app.post('/api/aktivasi', async (req, res) => {
 });
 
 process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
-process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error('❌ UNCAUGHT:', err); });
+process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error(' UNCAUGHT:', err); });
