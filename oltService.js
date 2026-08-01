@@ -51,20 +51,25 @@ async function cekRedamanHSAirpoCibarola(oltConfig, mac) {
     console.log(`\n🔍 [${oltConfig.label}] Mulai cek (Cibarola API)...`);
     try {
         const cleanTargetMac = mac.replace(/[:.-]/g, '').toLowerCase();
-        // ✅ FIX: Gunakan 12 karakter karena MAC HSAirpo Cibarola formatnya A031.DB00.DBF0 (12 hex)
-        const matchTarget = cleanTargetMac.substring(0, 12);
+        const matchTarget = cleanTargetMac.substring(0, 11);
         console.log(`MAC dicari: ${matchTarget}...`);
         
         const passwordBase64 = Buffer.from(oltConfig.pass || 'admin').toString('base64');
+        
         const loginRes = await axios.post(
             `http://${oltConfig.ip}:${oltConfig.port}/login/Auth`,
             { userName: oltConfig.user || 'admin', password: passwordBase64 },
             { headers: { 'Content-Type': 'application/json; charset=UTF-8', 'X-Requested-With': 'XMLHttpRequest' }, timeout: 10000 }
         );
+        
         if (loginRes.data.errCode !== 'success') throw new Error('Login gagal');
+        
         const cookies = loginRes.headers['set-cookie'];
         let sessionCookie = '';
-        if (cookies) sessionCookie = cookies.map(c => c.split(';')[0]).join('; ');
+        if (cookies) {
+            sessionCookie = cookies.map(c => c.split(';')[0]).join('; ');
+        }
+        
         const totalPon = oltConfig.total_pon || 4;
         for (let i = 1; i <= totalPon; i++) {
             const ponPort = `pon${i}`;
@@ -72,13 +77,18 @@ async function cekRedamanHSAirpoCibarola(oltConfig, mac) {
                 `http://${oltConfig.ip}:${oltConfig.port}/goform/getPortOnuOptical?${Math.random()}&PonPortName=${ponPort}`,
                 { headers: { 'Cookie': sessionCookie, 'X-Requested-With': 'XMLHttpRequest' }, timeout: 15000 }
             );
+            
             let jsonData = opticalRes.data;
-            if (typeof jsonData === 'string') { try { jsonData = JSON.parse(jsonData); } catch (e) {} }
+            if (typeof jsonData === 'string') {
+                try { jsonData = JSON.parse(jsonData); } catch (e) {}
+            }
+            
             if (jsonData && jsonData.list) {
                 const found = jsonData.list.find(onu => {
                     const onuMac = (onu.mac || '').replace(/\./g, '').toLowerCase();
                     return onuMac.startsWith(matchTarget);
                 });
+                
                 if (found) {
                     console.log(`   ✅ Ditemukan di ${ponPort.toUpperCase()}: ${found.mac}`);
                     let redaman = found.rxpower || 'N/A';
@@ -87,6 +97,7 @@ async function cekRedamanHSAirpoCibarola(oltConfig, mac) {
                 }
             }
         }
+        
         console.log(`   ❌ Tidak ditemukan di semua PON`);
         return null;
     } catch (error) {
