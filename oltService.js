@@ -1,4 +1,4 @@
-// oltService.js - Web Dashboard Version
+// oltService.js - Web Dashboard Version (Fixed HSAirpo Cibarola MAC)
 const axios = require('axios');
 const crypto = require('crypto');
 const puppeteer = require('puppeteer');
@@ -7,7 +7,7 @@ const puppeteer = require('puppeteer');
 // 1. HSAirpo API (Panglejar & Sukamelang)
 // ==========================================
 async function cekRedamanHSAirpoAPI(oltConfig, mac) {
-    console.log(`\n🔍 [${oltConfig.label}] Mulai cek (API)...`);
+    console.log(`\n [${oltConfig.label}] Mulai cek (API)...`);
     try {
         const searchMac = mac.substring(0, 16);
         console.log(`MAC dicari: ${searchMac}`);
@@ -45,14 +45,16 @@ async function cekRedamanHSAirpoAPI(oltConfig, mac) {
 }
 
 // ==========================================
-// 2. HSAirpo CIBAROLA (Axios API)
+// 2. HSAirpo CIBAROLA (Axios API) - FIXED MAC 12 CHAR
 // ==========================================
 async function cekRedamanHSAirpoCibarola(oltConfig, mac) {
-    console.log(`\n [${oltConfig.label}] Mulai cek (Cibarola API)...`);
+    console.log(`\n🔍 [${oltConfig.label}] Mulai cek (Cibarola API)...`);
     try {
         const cleanTargetMac = mac.replace(/[:.-]/g, '').toLowerCase();
+        // ✅ FIX: Gunakan 12 karakter karena MAC HSAirpo Cibarola formatnya A031.DB00.DBF0 (12 hex)
         const matchTarget = cleanTargetMac.substring(0, 12);
         console.log(`MAC dicari: ${matchTarget}...`);
+        
         const passwordBase64 = Buffer.from(oltConfig.pass || 'admin').toString('base64');
         const loginRes = await axios.post(
             `http://${oltConfig.ip}:${oltConfig.port}/login/Auth`,
@@ -94,7 +96,7 @@ async function cekRedamanHSAirpoCibarola(oltConfig, mac) {
 }
 
 // ==========================================
-// 3. Hioso (Puppeteer) - FIXED untuk Railway
+// 3. Hioso (Puppeteer)
 // ==========================================
 async function cekRedamanHioso(oltConfig, mac) {
     let searchMac = mac.substring(0, 16);
@@ -103,10 +105,9 @@ async function cekRedamanHioso(oltConfig, mac) {
     console.log(`MAC dicari: ${searchMac} (Panjang: ${searchMac.length})`);
     
     const browser = await puppeteer.launch({
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
-});
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+    });
     
     try {
         const page = await browser.newPage();
@@ -115,7 +116,7 @@ async function cekRedamanHioso(oltConfig, mac) {
         const baseUrl = `http://${oltConfig.ip}:${oltConfig.port}`;
         const user = oltConfig.user || 'admin';
         const pass = oltConfig.pass || 'admin';
-        console.log(`   ⏳ Mengakses halaman utama OLT...`);
+        console.log(`    Mengakses halaman utama OLT...`);
         
         await page.authenticate({ username: user, password: pass });
         await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
@@ -192,7 +193,7 @@ async function cekRedamanHioso(oltConfig, mac) {
             await new Promise(r => setTimeout(r, 3000));
             
             if (await page.$('#a')) {
-                console.log(`    Mengisi form login web...`);
+                console.log(`   🔑 Mengisi form login web...`);
                 await page.type('#a', user); await page.type('#b', pass);
                 await page.click('input[type="button"]');
                 await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
@@ -256,7 +257,7 @@ async function cekDenganRetry(checkerFn, oltConfig, mac) {
         console.log(`   🔁 [${oltConfig.label}] Percobaan ${attempt}/${MAX_RETRY_PER_OLT + 1} gagal: ${lastError}`);
         if (attempt <= MAX_RETRY_PER_OLT) await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
     }
-    console.log(`   ⛔ [${oltConfig.label}] Tetap gagal. Lanjut ke OLT berikutnya.`);
+    console.log(`    [${oltConfig.label}] Tetap gagal. Lanjut ke OLT berikutnya.`);
     return null;
 }
 
@@ -275,13 +276,13 @@ async function scanSemuaOlt(oltList, mac, onFound) {
         } else if (olt.type === 'Hioso') {
             hasil = await cekDenganRetry(cekRedamanHioso, olt, mac);
         } else {
-            console.log(`   ⚠️ Tipe OLT tidak dikenal, dilewati: ${olt.type} (${olt.label})`);
+            console.log(`   ️ Tipe OLT tidak dikenal, dilewati: ${olt.type} (${olt.label})`);
             continue;
         }
         
         if (hasil && !hasil.error) {
             console.log(`\n✅ KETEMU di ${hasil.olt_name}`);
-            const teksHasil = `\n✅ *${hasil.olt_name}*\n   📉 Redaman: *${hasil.redaman}*\n   📡 Status: ${hasil.status}`;
+            const teksHasil = `\n✅ *${hasil.olt_name}*\n   📉 Redaman: *${hasil.redaman}*\n    Status: ${hasil.status}`;
             await onFound(teksHasil);
             console.log(`========================================\n`);
             return true;
