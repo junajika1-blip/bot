@@ -1,269 +1,129 @@
-// index.js - RnBNET BOT (Web Dashboard Version)
+// index.js - RnBNET WEB DASHBOARD (Tanpa WhatsApp)
 const path = require('path');
 const express = require('express');
 const RouterOSAPI = require('node-routeros').RouterOSAPI;
 const config = require('./config');
 const { scanSemuaOlt } = require('./oltService');
 
-// ==========================================
-// 1. WEB SERVER + API ENDPOINTS
-// ==========================================
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
-
-// Halaman utama
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`🌐 WEB DASHBOARD RUNNING ON PORT ${PORT}`));
 
-// ==========================================
-// 2. HELPER MIKROTIK (ANTI-HANG / TIMEOUT WRAPPER)
-// ==========================================
+// Helper Timeout
 function withTimeout(promise, ms, errMsg) {
     let timeoutId;
-    const timeoutPromise = new Promise((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error(errMsg)), ms);
-    });
-    return Promise.race([
-        promise.finally(() => clearTimeout(timeoutId)),
-        timeoutPromise
-    ]);
+    const timeoutPromise = new Promise((_, reject) => { timeoutId = setTimeout(() => reject(new Error(errMsg)), ms); });
+    return Promise.race([promise.finally(() => clearTimeout(timeoutId)), timeoutPromise]);
 }
 
 async function connectMikrotik(serverKey) {
     const targetServer = config.servers[serverKey];
     if (!targetServer) throw new Error(`Server "${serverKey}" tidak ditemukan`);
-    
-    const api = new RouterOSAPI({
-        host: targetServer.mikrotik.host,
-        port: targetServer.mikrotik.port,
-        user: targetServer.mikrotik.user,
-        password: targetServer.mikrotik.pass,
-        timeout: 15
-    });
-    
-    try {
-        await withTimeout(api.connect(), 15000, `Timeout koneksi ke MikroTik ${targetServer.label}.`);
-        return { api, targetServer };
-    } catch (err) {
-        safeCloseMikrotik(api).catch(() => {});
-        throw new Error(`Gagal konek MikroTik ${targetServer.label}. Cek port API atau network.`);
-    }
+    const api = new RouterOSAPI({ host: targetServer.mikrotik.host, port: targetServer.mikrotik.port, user: targetServer.mikrotik.user, password: targetServer.mikrotik.pass, timeout: 15 });
+    try { await withTimeout(api.connect(), 15000, `Timeout koneksi ke MikroTik ${targetServer.label}.`); return { api, targetServer }; } 
+    catch (err) { safeCloseMikrotik(api).catch(() => {}); throw new Error(`Gagal konek MikroTik ${targetServer.label}. Cek port API atau network.`); }
 }
 
 async function getUserFromMikrotik(api, username) {
-    let secrets = await withTimeout(
-        api.write('/ppp/secret/print', [`?name=${username}`]),
-        25000,
-        'Timeout: MikroTik terlalu lambat merespons (Query Secret).'
-    );
-    
+    let secrets = await withTimeout(api.write('/ppp/secret/print', [`?name=${username}`]), 25000, 'Timeout Query Secret.');
     let userObj = secrets.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
     if (userObj) return userObj;
-    
-    secrets = await withTimeout(
-        api.write('/ppp/secret/print'),
-        25000,
-        'Timeout: MikroTik terlalu lambat merespons (Query Secret - Full Scan).'
-    );
-    
+    secrets = await withTimeout(api.write('/ppp/secret/print'), 25000, 'Timeout Query Secret Full Scan.');
     userObj = secrets.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
     if (!userObj) throw new Error(`User "${username}" tidak ditemukan`);
     return userObj;
 }
 
 async function getActiveUserFromMikrotik(api, username) {
-    let activeUsers = await withTimeout(
-        api.write('/ppp/active/print', [`?name=${username}`]),
-        25000,
-        'Timeout: MikroTik terlalu lambat merespons (Query Active).'
-    );
-    
+    let activeUsers = await withTimeout(api.write('/ppp/active/print', [`?name=${username}`]), 25000, 'Timeout Query Active.');
     let found = activeUsers.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
     if (found) return found;
-    
-    activeUsers = await withTimeout(
-        api.write('/ppp/active/print'),
-        25000,
-        'Timeout: MikroTik terlalu lambat merespons (Query Active - Full Scan).'
-    );
-    
+    activeUsers = await withTimeout(api.write('/ppp/active/print'), 25000, 'Timeout Query Active Full Scan.');
     return activeUsers.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
 }
 
-async function safeCloseMikrotik(api) {
-    if (!api) return;
-    try { await withTimeout(api.close(), 5000, 'Close timeout'); } catch (e) {}
-}
+async function safeCloseMikrotik(api) { if (!api) return; try { await withTimeout(api.close(), 5000, 'Close timeout'); } catch (e) {} }
 
-// ==========================================
-// 3. ANTRIAN (QUEUE) - MENCEGAH OVERLOAD
-// ==========================================
-const requestQueue = [];
-let isProcessingQueue = false;
-
+// Queue System
+const requestQueue = []; let isProcessingQueue = false;
 async function enqueueTask(taskFn) {
     return new Promise((resolve, reject) => {
-        const task = async () => {
-            try {
-                const result = await taskFn();
-                resolve(result);
-            } catch (err) {
-                reject(err);
-            }
-        };
-        
-        if (isProcessingQueue) {
-            requestQueue.push(task);
-        } else {
-            isProcessingQueue = true;
-            task().finally(() => processNextInQueue());
-        }
+        const task = async () => { try { resolve(await taskFn()); } catch (err) { reject(err); } };
+        if (isProcessingQueue) { requestQueue.push(task); } else { isProcessingQueue = true; task().finally(() => processNextInQueue()); }
     });
 }
-
 async function processNextInQueue() {
-    if (requestQueue.length > 0) {
-        const next = requestQueue.shift();
-        await next().finally(() => processNextInQueue());
-    } else {
-        isProcessingQueue = false;
-    }
+    if (requestQueue.length > 0) { const next = requestQueue.shift(); await next().finally(() => processNextInQueue()); } 
+    else { isProcessingQueue = false; }
 }
 
-// ==========================================
-// 4. API ENDPOINTS
-// ==========================================
-
-// GET /api/servers - Daftar server yang tersedia
+// API: Daftar Server (Untuk mengisi dropdown)
 app.get('/api/servers', (req, res) => {
-    const servers = Object.keys(config.servers).map(key => ({
-        key,
-        label: config.servers[key].label
-    }));
+    const servers = Object.keys(config.servers).map(key => ({ key, label: config.servers[key].label }));
     res.json({ servers });
 });
 
-// POST /api/cek-redaman - Cek redaman OLT
+// API: Cek Redaman
 app.post('/api/cek-redaman', async (req, res) => {
     const { serverKey, username } = req.body;
-    
-    if (!serverKey || !username) {
-        return res.status(400).json({ error: 'Server dan username wajib diisi' });
-    }
-    
+    if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
     let api;
     try {
         const result = await enqueueTask(async () => {
             const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
             api = mikrotikApi;
-            
             const userObj = await getUserFromMikrotik(api, username);
             let rawMac = userObj['caller-id'] || 'Any';
             const activeUser = await getActiveUserFromMikrotik(api, username);
             if (activeUser) rawMac = activeUser['caller-id'] || rawMac;
-            
-            if (!rawMac || rawMac === 'Any') {
-                throw new Error('MAC Address tidak terbaca untuk user ini');
-            }
-            
+            if (!rawMac || rawMac === 'Any') throw new Error('MAC Address tidak terbaca untuk user ini');
             const mac = rawMac.trim().toLowerCase();
-            let oltResult = null;
+            let oltText = 'ONU tidak ditemukan di OLT manapun';
             
-            await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => {
-                oltResult = teksHasil;
-            });
+            // Menggunakan callback sesuai struktur oltService.js
+            await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
             
-            return {
-                username,
-                server: targetServer.label,
-                mac,
-                olt: oltResult || 'ONU tidak ditemukan di OLT manapun'
-            };
+            return { username, server: targetServer.label, mac, olt: oltText };
         });
-        
         res.json({ success: true, data: result });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    } finally {
-        await safeCloseMikrotik(api);
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); } 
+    finally { await safeCloseMikrotik(api); }
 });
 
-// POST /api/aktivasi - Aktivasi/Open Isolir
+// API: Aktivasi
 app.post('/api/aktivasi', async (req, res) => {
     const { serverKey, username } = req.body;
-    
-    if (!serverKey || !username) {
-        return res.status(400).json({ error: 'Server dan username wajib diisi' });
-    }
-    
+    if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
     let api;
     try {
         const result = await enqueueTask(async () => {
             const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
             api = mikrotikApi;
-            
             const userObj = await getUserFromMikrotik(api, username);
-            
-            await withTimeout(
-                api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']),
-                15000,
-                'Timeout: Gagal mengirim perintah isolir ke MikroTik.'
-            );
-            
+            await withTimeout(api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']), 15000, 'Timeout set disabled=no');
             await new Promise(r => setTimeout(r, 2000));
-            
             const activeUser = await getActiveUserFromMikrotik(api, username);
             let ip = userObj['remote-address'] || 'Dynamic';
             let rawMac = userObj['caller-id'] || 'Any';
             const paket = userObj.profile || 'default';
-            
-            if (activeUser) {
-                ip = activeUser.address || ip;
-                rawMac = activeUser['caller-id'] || rawMac;
-            }
-            
-            const response = {
-                username,
-                server: targetServer.label,
-                paket,
-                ip,
-                mac: rawMac,
-                status: 'BERHASIL',
-                olt: null
-            };
-            
+            if (activeUser) { ip = activeUser.address || ip; rawMac = activeUser['caller-id'] || rawMac; }
+            const response = { username, server: targetServer.label, paket, ip, mac: rawMac, status: 'BERHASIL', olt: null };
             if (rawMac && rawMac !== 'Any') {
-                const mac = rawMac.trim().toLowerCase();
-                response.mac = mac;
-                
-                let oltResult = null;
-                await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => {
-                    oltResult = teksHasil;
-                });
-                
-                response.olt = oltResult || 'ONU tidak ditemukan di OLT manapun';
+                const mac = rawMac.trim().toLowerCase(); response.mac = mac;
+                let oltText = 'ONU tidak ditemukan di OLT manapun';
+                await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
+                response.olt = oltText;
             }
-            
             return response;
         });
-        
         res.json({ success: true, data: result });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    } finally {
-        await safeCloseMikrotik(api);
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); } 
+    finally { await safeCloseMikrotik(api); }
 });
 
-// ==========================================
-// 5. ERROR HANDLING
-// ==========================================
 process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
-process.on('uncaughtException', err => {
-    if (err.name === 'RosException' && err.message.includes('Timed out')) return;
-    console.error('❌ UNCAUGHT:', err);
-});
+process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error(' UNCAUGHT:', err); });
