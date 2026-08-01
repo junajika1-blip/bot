@@ -1,154 +1,241 @@
-// index.js - RnBNET WEB DASHBOARD (Tanpa WhatsApp)
-const path = require('path');
-const express = require('express');
-const RouterOSAPI = require('node-routeros').RouterOSAPI;
-const config = require('./config');
-const { scanSemuaOlt } = require('./oltService');
-
-const app = express();
-app.use(express.json());
-app.use(express.static(path.join(__dirname)));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
-
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(`🌐 WEB DASHBOARD RUNNING ON PORT ${PORT}`));
-
-function withTimeout(promise, ms, errMsg) {
-    let timeoutId;
-    const timeoutPromise = new Promise((_, reject) => {
-        timeoutId = setTimeout(() => reject(new Error(errMsg)), ms);
-    });
-    return Promise.race([promise.finally(() => clearTimeout(timeoutId)), timeoutPromise]);
-}
-
-async function connectMikrotik(serverKey) {
-    const targetServer = config.servers[serverKey];
-    if (!targetServer) throw new Error(`Server "${serverKey}" tidak ditemukan`);
-    const api = new RouterOSAPI({
-        host: targetServer.mikrotik.host,
-        port: targetServer.mikrotik.port,
-        user: targetServer.mikrotik.user,
-        password: targetServer.mikrotik.pass,
-        timeout: 15
-    });
-    try {
-        await withTimeout(api.connect(), 15000, `Timeout koneksi ke MikroTik ${targetServer.label}.`);
-        return { api, targetServer };
-    } catch (err) {
-        safeCloseMikrotik(api).catch(() => {});
-        throw new Error(`Gagal konek MikroTik ${targetServer.label}. Cek port API atau network.`);
-    }
-}
-
-async function getUserFromMikrotik(api, username) {
-    let secrets = await withTimeout(api.write('/ppp/secret/print', [`?name=${username}`]), 25000, 'Timeout Query Secret.');
-    let userObj = secrets.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
-    if (userObj) return userObj;
-    secrets = await withTimeout(api.write('/ppp/secret/print'), 25000, 'Timeout Query Secret Full Scan.');
-    userObj = secrets.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
-    if (!userObj) throw new Error(`User "${username}" tidak ditemukan`);
-    return userObj;
-}
-
-async function getActiveUserFromMikrotik(api, username) {
-    let activeUsers = await withTimeout(api.write('/ppp/active/print', [`?name=${username}`]), 25000, 'Timeout Query Active.');
-    let found = activeUsers.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
-    if (found) return found;
-    activeUsers = await withTimeout(api.write('/ppp/active/print'), 25000, 'Timeout Query Active Full Scan.');
-    return activeUsers.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
-}
-
-async function safeCloseMikrotik(api) {
-    if (!api) return;
-    try { await withTimeout(api.close(), 5000, 'Close timeout'); } catch (e) {}
-}
-
-const requestQueue = [];
-let isProcessingQueue = false;
-
-async function enqueueTask(taskFn) {
-    return new Promise((resolve, reject) => {
-        const task = async () => {
-            try { resolve(await taskFn()); } 
-            catch (err) { reject(err); }
-        };
-        if (isProcessingQueue) { requestQueue.push(task); } 
-        else { isProcessingQueue = true; task().finally(() => processNextInQueue()); }
-    });
-}
-
-async function processNextInQueue() {
-    if (requestQueue.length > 0) {
-        const next = requestQueue.shift();
-        await next().finally(() => processNextInQueue());
-    } else { isProcessingQueue = false; }
-}
-
-app.get('/api/servers', (req, res) => {
-    const servers = Object.keys(config.servers).map(key => ({ key, label: config.servers[key].label }));
-    res.json({ servers });
-});
-
-app.post('/api/cek-redaman', async (req, res) => {
-    const { serverKey, username } = req.body;
-    if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RnBNET - Cek Redaman & Aktivasi</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+        .header p { font-size: 16px; opacity: 0.9; }
+        .cards-wrapper { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-bottom: 30px; }
+        .card { 
+            background: rgba(255, 255, 255, 0.95); 
+            border-radius: 20px; 
+            padding: 35px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+            backdrop-filter: blur(10px); 
+        }
+        .card:hover { transform: translateY(-10px); box-shadow: 0 30px 80px rgba(0,0,0,0.4); }
+        .card-icon { 
+            width: 60px; height: 60px; 
+            border-radius: 15px; 
+            display: flex; align-items: center; justify-content: center; 
+            font-size: 28px; margin-bottom: 20px; 
+        }
+        .card-cek .card-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-aktivasi .card-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .card h2 { font-size: 24px; margin-bottom: 25px; color: #333; font-weight: 700; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 14px; }
+        .form-group select, .form-group input { 
+            width: 100%; padding: 14px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 12px; 
+            font-size: 15px; 
+            background: #f8f9fa; 
+        }
+        .form-group select:focus, .form-group input:focus { 
+            outline: none; 
+            border-color: #667eea; 
+            background: white; 
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
+        }
+        .btn { 
+            width: 100%; padding: 16px; 
+            border: none; border-radius: 12px; 
+            font-size: 16px; font-weight: 700; 
+            cursor: pointer; 
+            display: flex; align-items: center; justify-content: center; gap: 10px; 
+        }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .result { 
+            margin-top: 25px; padding: 25px; 
+            border-radius: 15px; display: none; 
+        }
+        .result.show { display: block; }
+        .result.success { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; color: #155724; }
+        .result.error { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545; color: #721c24; }
+        .result h3 { margin-bottom: 20px; font-size: 20px; font-weight: 700; }
+        .result-item { margin-bottom: 12px; display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .result-item:last-child { border-bottom: none; }
+        .result-label { font-weight: 600; color: #555; min-width: 120px; }
+        .result-value { color: #333; flex: 1; word-break: break-all; }
+        .olt-result { 
+            margin-top: 20px; padding: 20px; 
+            background: white; border-radius: 12px; 
+            border-left: 4px solid #28a745; 
+        }
+        .olt-result h4 { color: #28a745; margin-bottom: 15px; font-size: 18px; }
+        .loading { 
+            display: inline-block; width: 20px; height: 20px; 
+            border: 3px solid rgba(255,255,255,0.3); 
+            border-radius: 50%; 
+            border-top-color: white; 
+            animation: spin 1s ease-in-out infinite; 
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 768px) { 
+            .cards-wrapper { grid-template-columns: 1fr; } 
+            .header h1 { font-size: 24px; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Cek Redaman OLT & Aktivasi Pelanggan</h1>
+            <p>RnBNET Network Management System</p>
+        </div>
+        
+        <div class="cards-wrapper">
+            <div class="card card-cek">
+                <div class="card-icon"></div>
+                <h2>Cek Redaman</h2>
+                <form id="formCek">
+                    <div class="form-group">
+                        <label>Pilih Server</label>
+                        <select id="serverCek" required><option value="">-- Pilih Server --</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Username Pelanggan</label>
+                        <input type="text" id="usernameCek" placeholder="Contoh: liacahyani" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btnCek"><span> Cek Redaman</span></button>
+                </form>
+                <div id="resultCek" class="result"></div>
+            </div>
+            
+            <div class="card card-aktivasi">
+                <div class="card-icon">⚡</div>
+                <h2>Aktivasi Pelanggan Isolir</h2>
+                <form id="formAktivasi">
+                    <div class="form-group">
+                        <label>Pilih Server</label>
+                        <select id="serverAktivasi" required><option value="">-- Pilih Server --</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Username Pelanggan</label>
+                        <input type="text" id="usernameAktivasi" placeholder="Contoh: liacahyani" required>
+                    </div>
+                    <button type="submit" class="btn btn-secondary" id="btnAktivasi"><span>⚡ Aktivasi Sekarang</span></button>
+                </form>
+                <div id="resultAktivasi" class="result"></div>
+            </div>
+        </div>
+    </div>
     
-    let api;
-    try {
-        const result = await enqueueTask(async () => {
-            const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
-            api = mikrotikApi;
-            const userObj = await getUserFromMikrotik(api, username);
-            let rawMac = userObj['caller-id'] || 'Any';
-            const activeUser = await getActiveUserFromMikrotik(api, username);
-            if (activeUser) rawMac = activeUser['caller-id'] || rawMac;
-            if (!rawMac || rawMac === 'Any') throw new Error('MAC Address tidak terbaca untuk user ini');
-            const mac = rawMac.trim().toLowerCase();
-            let oltText = 'ONU tidak ditemukan di OLT manapun';
-            await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
-            return { username, server: targetServer.label, mac, olt: oltText };
-        });
-        res.json({ success: true, data: result });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    } finally {
-        await safeCloseMikrotik(api);
-    }
-});
-
-app.post('/api/aktivasi', async (req, res) => {
-    const { serverKey, username } = req.body;
-    if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
-    
-    let api;
-    try {
-        const result = await enqueueTask(async () => {
-            const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
-            api = mikrotikApi;
-            const userObj = await getUserFromMikrotik(api, username);
-            await withTimeout(api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']), 15000, 'Timeout set disabled=no');
-            await new Promise(r => setTimeout(r, 2000));
-            const activeUser = await getActiveUserFromMikrotik(api, username);
-            let ip = userObj['remote-address'] || 'Dynamic';
-            let rawMac = userObj['caller-id'] || 'Any';
-            const paket = userObj.profile || 'default';
-            if (activeUser) { ip = activeUser.address || ip; rawMac = activeUser['caller-id'] || rawMac; }
-            const response = { username, server: targetServer.label, paket, ip, mac: rawMac, status: 'BERHASIL', olt: null };
-            if (rawMac && rawMac !== 'Any') {
-                const mac = rawMac.trim().toLowerCase(); response.mac = mac;
-                let oltText = 'ONU tidak ditemukan di OLT manapun';
-                await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
-                response.olt = oltText;
+    <script>
+        async function loadServers() {
+            try {
+                const res = await fetch('/api/servers');
+                const data = await res.json();
+                const selectCek = document.getElementById('serverCek');
+                const selectAktivasi = document.getElementById('serverAktivasi');
+                data.servers.forEach(server => {
+                    selectCek.add(new Option(server.label, server.key));
+                    selectAktivasi.add(new Option(server.label, server.key));
+                });
+            } catch (err) { console.error('Gagal load servers:', err); }
+        }
+        
+        document.getElementById('formCek').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const serverKey = document.getElementById('serverCek').value;
+            const username = document.getElementById('usernameCek').value.trim();
+            const btn = document.getElementById('btnCek');
+            const resultDiv = document.getElementById('resultCek');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"></div> <span>Memproses...</span>';
+            resultDiv.classList.remove('show');
+            
+            try {
+                const res = await fetch('/api/cek-redaman', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ serverKey, username })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result show success';
+                    resultDiv.innerHTML = `
+                        <h3>📊 Hasil Cek Redaman OLT</h3>
+                        <div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div>
+                        <div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div>
+                        <div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>
+                        <div class="olt-result"><h4>${data.data.olt}</h4></div>
+                    `;
+                } else {
+                    throw new Error(data.error || 'Gagal cek redaman');
+                }
+            } catch (err) {
+                resultDiv.className = 'result show error';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🔍 Cek Redaman</span>';
             }
-            return response;
         });
-        res.json({ success: true, data: result });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    } finally {
-        await safeCloseMikrotik(api);
-    }
-});
-
-process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
-process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error('❌ UNCAUGHT:', err); });
+        
+        document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const serverKey = document.getElementById('serverAktivasi').value;
+            const username = document.getElementById('usernameAktivasi').value.trim();
+            const btn = document.getElementById('btnAktivasi');
+            const resultDiv = document.getElementById('resultAktivasi');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading"></div> <span>Memproses...</span>';
+            resultDiv.classList.remove('show');
+            
+            try {
+                const res = await fetch('/api/aktivasi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ serverKey, username })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'result show success';
+                    let html = `
+                        <h3>✨ Aktivasi Berhasil</h3>
+                        <div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div>
+                        <div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div>
+                        <div class="result-item"><span class="result-label">🛜 Paket:</span><span class="result-value">${data.data.paket}</span></div>
+                        <div class="result-item"><span class="result-label"> Server:</span><span class="result-value">${data.data.server}</span></div>
+                        <div class="result-item"><span class="result-label"> IP:</span><span class="result-value">${data.data.ip}</span></div>
+                        <div class="result-item"><span class="result-label"> MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>
+                    `;
+                    if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') {
+                        html += `<div class="olt-result"><h4>${data.data.olt}</h4></div>`;
+                    }
+                    resultDiv.innerHTML = html;
+                } else {
+                    throw new Error(data.error || 'Gagal aktivasi');
+                }
+            } catch (err) {
+                resultDiv.className = 'result show error';
+                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>⚡ Aktivasi Sekarang</span>';
+            }
+        });
+        
+        loadServers();
+    </script>
+</body>
+</html>
