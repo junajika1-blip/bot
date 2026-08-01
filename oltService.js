@@ -1,7 +1,7 @@
 // oltService.js - 100% CLEAN & FIXED VERSION (Double Login Hioso Fixed)
 const axios = require('axios');
 const crypto = require('crypto');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 
 // ==========================================
 // 1. HSAirpo API (Panglejar & Sukamelang)
