@@ -1,4 +1,4 @@
-// index.js - RnBNET WEB DASHBOARD (Queue System FIXED)
+// index.js - RnBNET WEB DASHBOARD (Queue System Complete)
 const path = require('path');
 const express = require('express');
 const RouterOSAPI = require('node-routeros').RouterOSAPI;
@@ -11,7 +11,7 @@ app.use(express.static(path.join(__dirname)));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log(` WEB DASHBOARD RUNNING ON PORT ${PORT}`));
+app.listen(PORT, () => console.log(`🌐 WEB DASHBOARD RUNNING ON PORT ${PORT}`));
 
 // Helper Timeout
 function withTimeout(promise, ms, errMsg) {
@@ -65,24 +65,17 @@ async function safeCloseMikrotik(api) {
 }
 
 // ==========================================
-// QUEUE SYSTEM (DIPERBAIKI)
+// QUEUE SYSTEM LENGKAP
 // ==========================================
 const requestQueue = [];
 let isProcessingQueue = false;
+let currentTask = null;
 
 async function enqueueTask(taskFn, username, serverLabel) {
-    // Jika sedang ada yang proses, masuk antrian
     if (isProcessingQueue) {
         const position = requestQueue.length + 1;
         requestQueue.push({
-            execute: async () => {
-                try {
-                    await taskFn();
-                    console.log(`✅ [ANTRIAN SELESAI] ${username} (${serverLabel})`);
-                } catch (err) {
-                    console.error(`❌ [ANTRIAN GAGAL] ${username}: ${err.message}`);
-                }
-            },
+            execute: taskFn,
             username, 
             server: serverLabel
         });
@@ -92,10 +85,9 @@ async function enqueueTask(taskFn, username, serverLabel) {
             position, 
             estimatedWait: position * 90 
         };
-    } 
-    // Jika tidak ada antrian, proses LANGSUNG dan TUNGGU sampai selesai
-    else {
+    } else {
         isProcessingQueue = true;
+        currentTask = { username, server: serverLabel };
         console.log(`▶️ [PROSES] ${username} (${serverLabel}) sedang diproses`);
         try {
             const result = await taskFn();
@@ -103,6 +95,7 @@ async function enqueueTask(taskFn, username, serverLabel) {
         } catch (err) {
             return { success: false, error: err.message };
         } finally {
+            currentTask = null;
             processNextInQueue();
         }
     }
@@ -111,9 +104,16 @@ async function enqueueTask(taskFn, username, serverLabel) {
 async function processNextInQueue() {
     if (requestQueue.length > 0) {
         const next = requestQueue.shift();
+        currentTask = { username: next.username, server: next.server };
         console.log(`▶️ [PROSES] ${next.username} (${next.server}) dari antrian #1`);
-        await next.execute();
-        processNextInQueue();
+        try {
+            await next.execute();
+        } catch (err) {
+            console.error(`❌ [GAGAL] ${next.username}: ${err.message}`);
+        } finally {
+            currentTask = null;
+            processNextInQueue();
+        }
     } else {
         isProcessingQueue = false;
         console.log(`✅ [SELESAI] Antrian kosong`);
@@ -128,11 +128,15 @@ app.get('/api/servers', (req, res) => {
 
 // API: Cek Status Antrian
 app.get('/api/queue-status', (req, res) => {
-    const currentProcessing = requestQueue.length > 0 ? requestQueue[0] : null;
     res.json({
         queueLength: requestQueue.length,
         isProcessing: isProcessingQueue,
-        currentProcessing: currentProcessing ? { username: currentProcessing.username, server: currentProcessing.server } : null
+        currentProcessing: currentTask,
+        waitingList: requestQueue.map((item, index) => ({
+            position: index + 1,
+            username: item.username,
+            server: item.server
+        }))
     });
 });
 
@@ -191,5 +195,5 @@ app.post('/api/aktivasi', async (req, res) => {
     res.json(result);
 });
 
-process.on('unhandledRejection', err => console.error(' UNHANDLED:', err));
+process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
 process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error('❌ UNCAUGHT:', err); });
