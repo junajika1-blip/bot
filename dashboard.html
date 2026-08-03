@@ -6,114 +6,38 @@
     <title>RnBNET - Cek Redaman & Aktivasi</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            min-height: 100vh; 
-            padding: 20px; 
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 700px; margin: 0 auto; }
         .header { text-align: center; color: white; margin-bottom: 30px; }
         .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
         .header p { font-size: 14px; opacity: 0.9; }
         
-        /* QUEUE STATUS BAR */
-        .queue-status-bar { 
-            background: rgba(255, 255, 255, 0.2); 
-            backdrop-filter: blur(10px); 
-            border-radius: 12px; 
-            padding: 12px 20px; 
-            margin-bottom: 20px; 
-            display: none; 
-            align-items: center; 
-            justify-content: space-between; 
-            color: white; 
-            font-size: 14px;
-            border: 1px solid rgba(255,255,255,0.3);
-            animation: slideDown 0.3s ease;
-        }
+        .queue-status-bar { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border-radius: 12px; padding: 12px 20px; margin-bottom: 20px; display: none; align-items: center; justify-content: space-between; color: white; font-size: 14px; border: 1px solid rgba(255,255,255,0.3); animation: slideDown 0.3s ease; }
         .queue-status-bar.show { display: flex; }
         .queue-status-bar .queue-info { display: flex; align-items: center; gap: 10px; }
-        .queue-status-bar .queue-count { 
-            background: #f39c12; 
-            color: white;
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-weight: 700;
-            font-size: 13px;
-        }
+        .queue-status-bar .queue-count { background: #f39c12; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 13px; }
         .queue-status-bar .current-task { font-size: 13px; opacity: 0.9; }
         
-        /* TAB NAVIGATION */
-        .tab-nav {
-            display: flex;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 5px;
-            margin-bottom: 25px;
-            backdrop-filter: blur(10px);
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            background: transparent;
-            color: white;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-        .tab-btn.active {
-            background: white;
-            color: #667eea;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
+        .tab-nav { display: flex; background: rgba(255, 255, 255, 0.2); border-radius: 15px; padding: 5px; margin-bottom: 25px; backdrop-filter: blur(10px); }
+        .tab-btn { flex: 1; padding: 14px; border: none; background: transparent; color: white; font-size: 15px; font-weight: 600; cursor: pointer; border-radius: 12px; transition: all 0.3s ease; }
+        .tab-btn.active { background: white; color: #667eea; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         
-        /* SLIDER */
         .slider-container { position: relative; overflow: hidden; border-radius: 20px; }
         .slider-wrapper { display: flex; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
         .slide { min-width: 100%; }
         
-        /* CARD */
-        .card { 
-            background: rgba(255, 255, 255, 0.98); 
-            border-radius: 20px; 
-            padding: 30px; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
-        }
+        .card { background: rgba(255, 255, 255, 0.98); border-radius: 20px; padding: 30px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
         .card-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
-        .card-icon { 
-            width: 55px; height: 55px; 
-            border-radius: 15px; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 26px; 
-        }
+        .card-icon { width: 55px; height: 55px; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 26px; }
         .card-cek .card-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .card-aktivasi .card-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
         .card-header h2 { font-size: 22px; color: #333; font-weight: 700; }
         
         .form-group { margin-bottom: 18px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 14px; }
-        .form-group select, .form-group input { 
-            width: 100%; padding: 14px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 12px; 
-            font-size: 15px; 
-            background: #f8f9fa; 
-        }
-        .form-group select:focus, .form-group input:focus { 
-            outline: none; border-color: #667eea; background: white; 
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
-        }
-        .btn { 
-            width: 100%; padding: 16px; 
-            border: none; border-radius: 12px; 
-            font-size: 16px; font-weight: 700; 
-            cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; gap: 10px; 
-        }
+        .form-group select, .form-group input { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 15px; background: #f8f9fa; }
+        .form-group select:focus, .form-group input:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .btn-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -128,11 +52,7 @@
         .result-label { font-weight: 600; color: #555; min-width: 110px; font-size: 14px; }
         .result-value { color: #333; flex: 1; word-break: break-all; font-size: 14px; }
         
-        .olt-result { 
-            margin-top: 18px; padding: 18px; 
-            background: white; border-radius: 12px; 
-            border-left: 4px solid #28a745;
-        }
+        .olt-result { margin-top: 18px; padding: 18px; background: white; border-radius: 12px; border-left: 4px solid #28a745; }
         .olt-result h4 { color: #28a745; margin-bottom: 12px; font-size: 16px; }
         .olt-info { display: flex; flex-direction: column; gap: 8px; }
         .olt-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; }
@@ -141,79 +61,41 @@
         .olt-value strong { color: #28a745; font-weight: 700; }
         
         /* LOADING OVERLAY */
-        .loading-overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(5px);
-            display: none; align-items: center; justify-content: center;
-            z-index: 9999;
-        }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); display: none; align-items: center; justify-content: center; z-index: 9999; }
         .loading-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
-        .loading-content {
-            background: white; border-radius: 20px;
-            padding: 35px; text-align: center;
-            max-width: 450px; width: 90%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            animation: slideUp 0.5s ease;
-        }
-        .spinner-ring {
-            display: inline-block; position: relative;
-            width: 70px; height: 70px; margin-bottom: 20px;
-        }
-        .spinner-ring div {
-            box-sizing: border-box; display: block; position: absolute;
-            width: 56px; height: 56px; margin: 7px;
-            border: 4px solid #667eea; border-radius: 50%;
-            animation: spinner-ring 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-            border-color: #667eea transparent transparent transparent;
-        }
+        .loading-content { background: white; border-radius: 20px; padding: 35px; text-align: center; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.5s ease; }
+        .spinner-ring { display: inline-block; position: relative; width: 70px; height: 70px; margin-bottom: 20px; }
+        .spinner-ring div { box-sizing: border-box; display: block; position: absolute; width: 56px; height: 56px; margin: 7px; border: 4px solid #667eea; border-radius: 50%; animation: spinner-ring 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite; border-color: #667eea transparent transparent transparent; }
         .spinner-ring div:nth-child(1) { animation-delay: -0.45s; }
         .spinner-ring div:nth-child(2) { animation-delay: -0.3s; }
         .spinner-ring div:nth-child(3) { animation-delay: -0.15s; }
         .loading-title { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 12px; }
         .loading-message { font-size: 14px; color: #666; margin-bottom: 18px; line-height: 1.5; }
-        
-        .queue-info-box { 
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); 
-            border: 2px solid #f39c12; 
-            border-radius: 12px; 
-            padding: 15px; 
-            margin: 15px 0; 
-        }
-        .queue-info-box .queue-position { 
-            font-size: 24px; font-weight: 700; color: #d63031; margin-bottom: 5px; 
-        }
+        .queue-info-box { background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px solid #f39c12; border-radius: 12px; padding: 15px; margin: 15px 0; }
+        .queue-info-box .queue-position { font-size: 24px; font-weight: 700; color: #d63031; margin-bottom: 5px; }
         .queue-info-box .queue-wait { font-size: 13px; color: #666; }
-        .queue-info-box .queue-list {
-            margin-top: 10px; padding-top: 10px;
-            border-top: 1px solid rgba(0,0,0,0.1);
-            font-size: 12px; color: #555; text-align: left;
-        }
+        .queue-info-box .queue-list { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0,0,0,0.1); font-size: 12px; color: #555; text-align: left; }
         .queue-info-box .queue-list-item { padding: 3px 0; }
-        
-        .loading-warning {
-            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-            border: 2px solid #e74c3c; border-radius: 10px;
-            padding: 12px; margin-top: 15px;
-        }
+        .loading-warning { background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border: 2px solid #e74c3c; border-radius: 10px; padding: 12px; margin-top: 15px; }
         .loading-warning strong { color: #c0392b; font-weight: 700; display: block; margin-bottom: 4px; font-size: 15px; }
         .loading-warning p { color: #666; font-size: 13px; }
+        .progress-bar { width: 100%; height: 6px; background: #f0f0f0; border-radius: 3px; margin-top: 18px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); animation: progress 2s ease-in-out infinite; }
         
-        .progress-bar {
-            width: 100%; height: 6px; background: #f0f0f0;
-            border-radius: 3px; margin-top: 18px; overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            animation: progress 2s ease-in-out infinite;
-        }
+        /* CHOICE MODAL (BARU) */
+        .choice-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .choice-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+        .choice-content { background: white; border-radius: 20px; padding: 30px; text-align: center; max-width: 400px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.4s ease; }
+        .choice-icon { font-size: 50px; margin-bottom: 15px; }
+        .choice-title { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 10px; }
+        .choice-message { font-size: 14px; color: #666; margin-bottom: 25px; line-height: 1.5; }
+        .choice-btn { width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .choice-btn-wait { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .choice-btn-wait:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .choice-btn-later { background: #f1f2f6; color: #57606f; }
+        .choice-btn-later:hover { background: #dfe4ea; }
         
-        .swipe-hint {
-            text-align: center; color: rgba(255,255,255,0.7);
-            font-size: 12px; margin-top: 15px;
-        }
+        .swipe-hint { text-align: center; color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 15px; }
         
         @keyframes spinner-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
@@ -222,11 +104,7 @@
         @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        @media (max-width: 768px) { 
-            .header h1 { font-size: 22px; } 
-            .card { padding: 22px; }
-            .tab-btn { font-size: 13px; padding: 12px 8px; }
-        }
+        @media (max-width: 768px) { .header h1 { font-size: 22px; } .card { padding: 22px; } .tab-btn { font-size: 13px; padding: 12px 8px; } }
     </style>
 </head>
 <body>
@@ -240,19 +118,28 @@
         <div class="current-task" id="currentTask">-</div>
     </div>
     
+    <!-- CHOICE MODAL (BARU) -->
+    <div class="choice-overlay" id="choiceOverlay">
+        <div class="choice-content">
+            <div class="choice-icon">⚠️</div>
+            <div class="choice-title">Sistem Sedang Sibuk!</div>
+            <div class="choice-message" id="choiceMessage">Teknisi lain sedang melakukan scanning. Apakah Anda ingin menunggu di antrian atau kembali lagi nanti?</div>
+            <button class="choice-btn choice-btn-wait" id="btnWaitQueue">⏳ Tunggu di Antrian</button>
+            <button class="choice-btn choice-btn-later" id="btnLater">🔙 Nanti Saja</button>
+        </div>
+    </div>
+
     <!-- LOADING OVERLAY -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-content">
             <div class="spinner-ring"><div></div><div></div><div></div><div></div></div>
             <div class="loading-title" id="loadingTitle"> Sedang Memproses...</div>
             <div class="loading-message" id="loadingMessage">Sistem sedang melakukan scanning OLT.</div>
-            
             <div class="queue-info-box" id="queueInfoBox" style="display: none;">
                 <div class="queue-position" id="queuePosition">Antrian #1</div>
                 <div class="queue-wait" id="queueWait">Estimasi tunggu: ~90 detik</div>
                 <div class="queue-list" id="queueList"></div>
             </div>
-            
             <div class="progress-bar"><div class="progress-fill"></div></div>
             <div class="loading-warning">
                 <strong>⚠️ JANGAN REFRESH HALAMAN!</strong>
@@ -298,255 +185,237 @@
                 </div>
             </div>
         </div>
-        
         <div class="swipe-hint">👆 Geser kiri/kanan untuk berpindah tab</div>
     </div>
     
     <script>
-    // TAB & SLIDER
-    let currentTab = 0;
-    const sliderWrapper = document.getElementById('sliderWrapper');
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    function switchTab(index) { 
-        currentTab = index; 
-        sliderWrapper.style.transform = `translateX(-${index * 100}%)`; 
-        tabBtns.forEach((btn, i) => btn.classList.toggle('active', i === index)); 
-    }
-    tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(parseInt(btn.dataset.tab))));
-    
-    let touchStartX = 0, touchEndX = 0;
-    const sliderContainer = document.getElementById('sliderContainer');
-    sliderContainer.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-    sliderContainer.addEventListener('touchend', (e) => { 
-        touchEndX = e.changedTouches[0].screenX; 
-        const diff = touchStartX - touchEndX; 
-        if (Math.abs(diff) > 50) { 
-            if (diff > 0 && currentTab < 1) switchTab(currentTab + 1); 
-            else if (diff < 0 && currentTab > 0) switchTab(currentTab - 1); 
-        } 
-    }, { passive: true });
-    
-    // QUEUE STATUS
-    let queuePollingInterval;
-    async function updateQueueStatus() {
-        try {
-            const res = await fetch('/api/queue-status');
-            const data = await res.json();
-            const statusBar = document.getElementById('queueStatusBar');
-            const queueCount = document.getElementById('queueCount');
-            const queueLabel = document.getElementById('queueLabel');
-            const currentTask = document.getElementById('currentTask');
-            
-            if (data.isProcessing || data.queueLength > 0) {
-                statusBar.classList.add('show');
-                queueCount.textContent = data.queueLength;
-                if (data.queueLength === 0) queueLabel.textContent = 'sedang diproses';
-                else queueLabel.textContent = `menunggu (${data.queueLength} antrian)`;
-                if (data.currentProcessing) currentTask.textContent = `🔄 ${data.currentProcessing.username} (${data.currentProcessing.server})`;
-                else currentTask.textContent = '-';
-            } else {
-                statusBar.classList.remove('show');
-            }
-        } catch (err) {}
-    }
-    
-    async function loadServers() {
-        try {
-            const res = await fetch('/api/servers');
-            const data = await res.json();
-            const selectCek = document.getElementById('serverCek');
-            const selectAktivasi = document.getElementById('serverAktivasi');
-            data.servers.forEach(server => { 
-                selectCek.add(new Option(server.label, server.key)); 
-                selectAktivasi.add(new Option(server.label, server.key)); 
-            });
-        } catch (err) {}
-    }
-    
-    function showLoading(isQueued = false, position = 0, estimatedWait = 0) {
-        const overlay = document.getElementById('loadingOverlay');
-        const title = document.getElementById('loadingTitle');
-        const message = document.getElementById('loadingMessage');
-        const queueInfoBox = document.getElementById('queueInfoBox');
-        const queuePosition = document.getElementById('queuePosition');
-        const queueWait = document.getElementById('queueWait');
-        const queueList = document.getElementById('queueList');
+        // TAB & SLIDER
+        let currentTab = 0;
+        const sliderWrapper = document.getElementById('sliderWrapper');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        function switchTab(index) { currentTab = index; sliderWrapper.style.transform = `translateX(-${index * 100}%)`; tabBtns.forEach((btn, i) => btn.classList.toggle('active', i === index)); }
+        tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(parseInt(btn.dataset.tab))));
         
-        overlay.classList.add('show');
+        let touchStartX = 0, touchEndX = 0;
+        const sliderContainer = document.getElementById('sliderContainer');
+        sliderContainer.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+        sliderContainer.addEventListener('touchend', (e) => { touchEndX = e.changedTouches[0].screenX; const diff = touchStartX - touchEndX; if (Math.abs(diff) > 50) { if (diff > 0 && currentTab < 1) switchTab(currentTab + 1); else if (diff < 0 && currentTab > 0) switchTab(currentTab - 1); } }, { passive: true });
         
-        if (isQueued) {
-            title.textContent = '⏳ Anda Dalam Antrian';
-            message.textContent = 'Teknisi lain sedang melakukan scan. Mohon tunggu giliran Anda.';
-            queueInfoBox.style.display = 'block';
-            queuePosition.textContent = `Antrian #${position}`;
-            const menit = Math.floor(estimatedWait / 60);
-            const detik = estimatedWait % 60;
-            queueWait.textContent = `Estimasi tunggu: ~${menit > 0 ? menit + ' menit ' : ''}${detik} detik`;
-            
-            fetch('/api/queue-status').then(r => r.json()).then(data => {
-                if (data.waitingList && data.waitingList.length > 0) {
-                    queueList.innerHTML = '<strong>Daftar Antrian:</strong>' + 
-                        data.waitingList.map(item => `<div class="queue-list-item">#${item.position}: ${item.username} (${item.server})</div>`).join('');
-                }
-            });
-        } else {
-            title.textContent = '⏳ Sedang Memproses...';
-            message.textContent = 'Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan.';
-            queueInfoBox.style.display = 'none';
-        }
-    }
-    
-    function hideLoading() { 
-        document.getElementById('loadingOverlay').classList.remove('show'); 
-        if (queuePollingInterval) { 
-            clearInterval(queuePollingInterval); 
-            queuePollingInterval = null; 
-        } 
-    }
-    
-    function parseOLTResult(oltText) {
-        const lines = oltText.split('\n').filter(line => line.trim());
-        const oltName = lines[0]?.replace(/[✅*]/g, '').trim() || 'OLT';
-        const redaman = lines[1]?.match(/Redaman:\s*\*?([^\*]*)\*?/)?.[1].trim() || 'N/A';
-        const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Unknown';
-        return { oltName, redaman, status };
-    }
-    
-    // POLLING HASIL ANTRIAN - INI YANG BARU!
-    async function pollForResult(queueId, resultDiv, btn, isAktivasi = false) {
-        queuePollingInterval = setInterval(async () => {
+        // QUEUE STATUS
+        let queuePollingInterval;
+        async function updateQueueStatus() {
             try {
-                const res = await fetch(`/api/queue-result/${queueId}`);
+                const res = await fetch('/api/queue-status');
+                const data = await res.json();
+                const statusBar = document.getElementById('queueStatusBar');
+                const queueCount = document.getElementById('queueCount');
+                const queueLabel = document.getElementById('queueLabel');
+                const currentTask = document.getElementById('currentTask');
+                
+                if (data.isProcessing || data.queueLength > 0) {
+                    statusBar.classList.add('show');
+                    queueCount.textContent = data.queueLength;
+                    if (data.queueLength === 0) queueLabel.textContent = 'sedang diproses';
+                    else queueLabel.textContent = `menunggu (${data.queueLength} antrian)`;
+                    if (data.currentProcessing) currentTask.textContent = `🔄 ${data.currentProcessing.username} (${data.currentProcessing.server})`;
+                    else currentTask.textContent = '-';
+                } else {
+                    statusBar.classList.remove('show');
+                }
+            } catch (err) {}
+        }
+        
+        async function loadServers() {
+            try {
+                const res = await fetch('/api/servers');
+                const data = await res.json();
+                const selectCek = document.getElementById('serverCek');
+                const selectAktivasi = document.getElementById('serverAktivasi');
+                data.servers.forEach(server => { selectCek.add(new Option(server.label, server.key)); selectAktivasi.add(new Option(server.label, server.key)); });
+            } catch (err) {}
+        }
+        
+        function showLoading(isQueued = false, position = 0, estimatedWait = 0) {
+            const overlay = document.getElementById('loadingOverlay');
+            const title = document.getElementById('loadingTitle');
+            const message = document.getElementById('loadingMessage');
+            const queueInfoBox = document.getElementById('queueInfoBox');
+            const queuePosition = document.getElementById('queuePosition');
+            const queueWait = document.getElementById('queueWait');
+            const queueList = document.getElementById('queueList');
+            
+            overlay.classList.add('show');
+            
+            if (isQueued) {
+                title.textContent = '⏳ Anda Dalam Antrian';
+                message.textContent = 'Teknisi lain sedang melakukan scan. Mohon tunggu giliran Anda.';
+                queueInfoBox.style.display = 'block';
+                queuePosition.textContent = `Antrian #${position}`;
+                const menit = Math.floor(estimatedWait / 60);
+                const detik = estimatedWait % 60;
+                queueWait.textContent = `Estimasi tunggu: ~${menit > 0 ? menit + ' menit ' : ''}${detik} detik`;
+                
+                fetch('/api/queue-status').then(r => r.json()).then(data => {
+                    if (data.waitingList && data.waitingList.length > 0) {
+                        queueList.innerHTML = '<strong>Daftar Antrian:</strong>' + data.waitingList.map(item => `<div class="queue-list-item">#${item.position}: ${item.username} (${item.server})</div>`).join('');
+                    }
+                });
+            } else {
+                title.textContent = '⏳ Sedang Memproses...';
+                message.textContent = 'Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan.';
+                queueInfoBox.style.display = 'none';
+            }
+        }
+        
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); if (queuePollingInterval) { clearInterval(queuePollingInterval); queuePollingInterval = null; } }
+        
+        function parseOLTResult(oltText) {
+            const lines = oltText.split('\n').filter(line => line.trim());
+            const oltName = lines[0]?.replace(/[✅*]/g, '').trim() || 'OLT';
+            const redaman = lines[1]?.match(/Redaman:\s*\*?([^\*]*)\*?/)?.[1].trim() || 'N/A';
+            const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Unknown';
+            return { oltName, redaman, status };
+        }
+
+        // ==========================================
+        // LOGIKA PILIHAN ANTRIAN (BARU)
+        // ==========================================
+        let pendingAction = null;
+        let pendingData = null;
+
+        function showQueueChoiceModal(action, serverKey, username) {
+            pendingAction = action;
+            pendingData = { serverKey, username };
+            
+            const actionName = action === 'cek' ? 'Cek Redaman' : 'Aktivasi';
+            document.getElementById('choiceMessage').textContent = `Sistem sedang sibuk melakukan ${actionName}. Apakah Anda ingin menunggu di antrian atau kembali lagi nanti?`;
+            
+            document.getElementById('choiceOverlay').classList.add('show');
+        }
+
+        document.getElementById('btnWaitQueue').addEventListener('click', async () => {
+            document.getElementById('choiceOverlay').classList.remove('show');
+            if (pendingAction === 'cek') {
+                await processScan('cek', pendingData.serverKey, pendingData.username);
+            } else if (pendingAction === 'aktivasi') {
+                await processScan('aktivasi', pendingData.serverKey, pendingData.username);
+            }
+        });
+
+        document.getElementById('btnLater').addEventListener('click', () => {
+            document.getElementById('choiceOverlay').classList.remove('show');
+            // Kembalikan tombol ke keadaan semula (tidak mengirim request ke Railway)
+            if (pendingAction === 'cek') document.getElementById('btnCek').disabled = false;
+            if (pendingAction === 'aktivasi') document.getElementById('btnAktivasi').disabled = false;
+            pendingAction = null;
+            pendingData = null;
+        });
+
+        // FUNGSI PROSES SCAN UTAMA
+        async function processScan(action, serverKey, username) {
+            const isAktivasi = action === 'aktivasi';
+            const resultDiv = document.getElementById(isAktivasi ? 'resultAktivasi' : 'resultCek');
+            const btn = document.getElementById(isAktivasi ? 'btnAktivasi' : 'btnCek');
+            const endpoint = isAktivasi ? '/api/aktivasi' : '/api/cek-redaman';
+
+            btn.disabled = true;
+            resultDiv.classList.remove('show');
+            showLoading(false);
+
+            try {
+                const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serverKey, username }) });
                 const data = await res.json();
                 
-                if (data.status === 'done') {
-                    // HASIL SUDAH TERSEDIA!
-                    clearInterval(queuePollingInterval);
-                    queuePollingInterval = null;
-                    hideLoading();
-                    btn.disabled = false;
-                    
+                if (data.queued) {
+                    showLoading(true, data.position, data.estimatedWait);
+                    pollForResult(data.queueId, resultDiv, btn, isAktivasi);
+                    return;
+                }
+                
+                hideLoading();
+                if (data.success) {
                     resultDiv.className = 'result show success';
-                    
                     if (isAktivasi) {
-                        let html = `<h3>✨ Aktivasi Berhasil</h3><div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>`;
-                        if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') { 
-                            const olt = parseOLTResult(data.data.olt); 
-                            html += `<div class="olt-result"><h4> ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`; 
-                        }
+                        let html = `<h3>✨ Aktivasi Berhasil</h3><div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div><div class="result-item"><span class="result-label"> Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>`;
+                        if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') { const olt = parseOLTResult(data.data.olt); html += `<div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label"> Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`; }
                         resultDiv.innerHTML = html;
                     } else {
                         const olt = parseOLTResult(data.data.olt);
                         resultDiv.innerHTML = `<h3>📊 Hasil Cek Redaman OLT</h3><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div><div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`;
                     }
-                } else if (data.status === 'error') {
-                    clearInterval(queuePollingInterval);
-                    queuePollingInterval = null;
-                    hideLoading();
-                    btn.disabled = false;
-                    resultDiv.className = 'result show error';
-                    resultDiv.innerHTML = `<h3>❌ Error</h3><p>${data.error}</p>`;
+                } else { throw new Error(data.error || `Gagal ${isAktivasi ? 'aktivasi' : 'cek redaman'}`); }
+            } catch (err) { hideLoading(); resultDiv.className = 'result show error'; resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`; } finally { if (!queuePollingInterval) btn.disabled = false; }
+        }
+
+        // POLLING HASIL ANTRIAN
+        async function pollForResult(queueId, resultDiv, btn, isAktivasi) {
+            queuePollingInterval = setInterval(async () => {
+                try {
+                    const res = await fetch(`/api/queue-result/${queueId}`);
+                    const data = await res.json();
+                    if (data.status === 'done') {
+                        clearInterval(queuePollingInterval); queuePollingInterval = null; hideLoading(); btn.disabled = false;
+                        resultDiv.className = 'result show success';
+                        if (isAktivasi) {
+                            let html = `<h3>✨ Aktivasi Berhasil</h3><div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label"> IP:</span><span class="result-value">${data.data.ip}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>`;
+                            if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') { const olt = parseOLTResult(data.data.olt); html += `<div class="olt-result"><h4> ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`; }
+                            resultDiv.innerHTML = html;
+                        } else {
+                            const olt = parseOLTResult(data.data.olt);
+                            resultDiv.innerHTML = `<h3> Hasil Cek Redaman OLT</h3><div class="result-item"><span class="result-label"> Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div><div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label"> Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`;
+                        }
+                    } else if (data.status === 'error') {
+                        clearInterval(queuePollingInterval); queuePollingInterval = null; hideLoading(); btn.disabled = false;
+                        resultDiv.className = 'result show error'; resultDiv.innerHTML = `<h3>❌ Error</h3><p>${data.error}</p>`;
+                    }
+                } catch (err) { console.error('Polling error:', err); }
+            }, 2000);
+        }
+        
+        // FORM SUBMIT HANDLERS (Disederhanakan)
+        document.getElementById('formCek').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const serverKey = document.getElementById('serverCek').value;
+            const username = document.getElementById('usernameCek').value.trim();
+            const btn = document.getElementById('btnCek');
+            btn.disabled = true;
+
+            try {
+                const statusRes = await fetch('/api/queue-status');
+                const statusData = await statusRes.json();
+                if (statusData.isProcessing) {
+                    showQueueChoiceModal('cek', serverKey, username);
+                } else {
+                    await processScan('cek', serverKey, username);
                 }
-                // Jika masih 'pending', lanjut polling
             } catch (err) {
-                console.error('Polling error:', err);
+                btn.disabled = false;
             }
-        }, 2000); // Polling setiap 2 detik
-    }
-    
-    // FORM CEK REDAMAN
-    document.getElementById('formCek').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const serverKey = document.getElementById('serverCek').value;
-        const username = document.getElementById('usernameCek').value.trim();
-        const resultDiv = document.getElementById('resultCek');
-        const btn = document.getElementById('btnCek');
-        btn.disabled = true; 
-        resultDiv.classList.remove('show');
-        showLoading(false);
-        
-        try {
-            const res = await fetch('/api/cek-redaman', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ serverKey, username }) 
-            });
-            const data = await res.json();
-            
-            if (data.queued) {
-                // MASUK ANTRIAN - tampilkan info antrian
-                showLoading(true, data.position, data.estimatedWait);
-                
-                // POLLING OTOMATIS sampai hasil tersedia!
-                pollForResult(data.queueId, resultDiv, btn, false);
-                return;
-            }
-            
-            // LANGSUNG DAPAT HASIL
-            hideLoading();
-            if (data.success) {
-                resultDiv.className = 'result show success';
-                const olt = parseOLTResult(data.data.olt);
-                resultDiv.innerHTML = `<h3>📊 Hasil Cek Redaman OLT</h3><div class="result-item"><span class="result-label"> Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div><div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label"> Status:</span><span class="result-value">${olt.status}</span></div></div></div>`;
-            } else { 
-                throw new Error(data.error || 'Gagal cek redaman'); 
-            }
-        } catch (err) { 
-            hideLoading(); 
-            resultDiv.className = 'result show error'; 
-            resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`; 
-        } finally { 
-            if (!queuePollingInterval) btn.disabled = false; 
-        }
-    });
-    
-    // FORM AKTIVASI
-    document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const serverKey = document.getElementById('serverAktivasi').value;
-        const username = document.getElementById('usernameAktivasi').value.trim();
-        const resultDiv = document.getElementById('resultAktivasi');
-        const btn = document.getElementById('btnAktivasi');
-        btn.disabled = true; 
-        resultDiv.classList.remove('show');
-        showLoading(false);
-        
-        try {
-            const res = await fetch('/api/aktivasi', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ serverKey, username }) 
-            });
-            const data = await res.json();
-            
-            if (data.queued) {
-                showLoading(true, data.position, data.estimatedWait);
-                pollForResult(data.queueId, resultDiv, btn, true);
-                return;
-            }
-            
-            hideLoading();
-            if (data.success) {
-                resultDiv.className = 'result show success';
-                let html = `<h3>✨ Aktivasi Berhasil</h3><div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div><div class="result-item"><span class="result-label"> Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>`;
-                if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') { 
-                    const olt = parseOLTResult(data.data.olt); 
-                    html += `<div class="olt-result"><h4> ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`; 
+        });
+
+        document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const serverKey = document.getElementById('serverAktivasi').value;
+            const username = document.getElementById('usernameAktivasi').value.trim();
+            const btn = document.getElementById('btnAktivasi');
+            btn.disabled = true;
+
+            try {
+                const statusRes = await fetch('/api/queue-status');
+                const statusData = await statusRes.json();
+                if (statusData.isProcessing) {
+                    showQueueChoiceModal('aktivasi', serverKey, username);
+                } else {
+                    await processScan('aktivasi', serverKey, username);
                 }
-                resultDiv.innerHTML = html;
-            } else { 
-                throw new Error(data.error || 'Gagal aktivasi'); 
+            } catch (err) {
+                btn.disabled = false;
             }
-        } catch (err) { 
-            hideLoading(); 
-            resultDiv.className = 'result show error'; 
-            resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`; 
-        } finally { 
-            if (!queuePollingInterval) btn.disabled = false; 
-        }
-    });
-    
-    updateQueueStatus();
-    setInterval(updateQueueStatus, 3000);
-    loadServers();
-</script>
+        });
+        
+        updateQueueStatus();
+        setInterval(updateQueueStatus, 3000);
+        loadServers();
+    </script>
+</body>
+</html>
