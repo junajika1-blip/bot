@@ -380,47 +380,90 @@
         }
         
         // FORM CEK REDAMAN
-        document.getElementById('formCek').addEventListener('submit', async (e) => {
+                document.getElementById('formCek').addEventListener('submit', async (e) => {
             e.preventDefault();
             const serverKey = document.getElementById('serverCek').value;
             const username = document.getElementById('usernameCek').value.trim();
             const resultDiv = document.getElementById('resultCek');
-            
-            showLoading();
-            resultDiv.classList.remove('show');
+            const btn = document.getElementById('btnCek');
+            btn.disabled = true; resultDiv.classList.remove('show');
             
             try {
-                const res = await fetch('/api/cek-redaman', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ serverKey, username })
-                });
+                const res = await fetch('/api/cek-redaman', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serverKey, username }) });
                 const data = await res.json();
-                hideLoading();
                 
+                if (data.queued) {
+                    showLoading(true, data.position, data.estimatedWait);
+                    queuePollingInterval = setInterval(async () => { 
+                        await updateQueueStatus(); 
+                        const checkRes = await fetch('/api/queue-status'); 
+                        const checkData = await checkRes.json(); 
+                        if (!checkData.isProcessing && checkData.queueLength === 0) { 
+                            hideLoading(); btn.disabled = false; 
+                            resultDiv.className = 'result show success';
+                            resultDiv.innerHTML = `<h3>✅ Antrian Selesai</h3><p>Proses scan telah selesai. Silakan klik tombol "Cek Redaman" sekali lagi untuk melihat hasil.</p>`;
+                            clearInterval(queuePollingInterval); queuePollingInterval = null;
+                        } 
+                    }, 3000);
+                    return;
+                }
+                
+                hideLoading();
                 if (data.success) {
                     resultDiv.className = 'result show success';
                     const olt = parseOLTResult(data.data.olt);
-                    resultDiv.innerHTML = `
-                        <h3> Hasil Cek Redaman OLT</h3>
-                        <div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div>
-                        <div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div>
-                        <div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>
-                        <div class="olt-result">
-                            <h4>📡 ${olt.oltName}</h4>
-                            <div class="olt-info">
-                                <div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div>
-                                <div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    throw new Error(data.error || 'Gagal cek redaman');
+                    resultDiv.innerHTML = `<h3>📊 Hasil Cek Redaman OLT</h3><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div><div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`;
+                } else { 
+                    throw new Error(data.error || 'Gagal cek redaman'); 
                 }
-            } catch (err) {
+            } catch (err) { 
+                hideLoading(); resultDiv.className = 'result show error'; resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`; 
+            } finally { 
+                if (!queuePollingInterval) btn.disabled = false; 
+            }
+        });
+        
+        document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const serverKey = document.getElementById('serverAktivasi').value;
+            const username = document.getElementById('usernameAktivasi').value.trim();
+            const resultDiv = document.getElementById('resultAktivasi');
+            const btn = document.getElementById('btnAktivasi');
+            btn.disabled = true; resultDiv.classList.remove('show');
+            
+            try {
+                const res = await fetch('/api/aktivasi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serverKey, username }) });
+                const data = await res.json();
+                
+                if (data.queued) {
+                    showLoading(true, data.position, data.estimatedWait);
+                    queuePollingInterval = setInterval(async () => { 
+                        await updateQueueStatus(); 
+                        const checkRes = await fetch('/api/queue-status'); 
+                        const checkData = await checkRes.json(); 
+                        if (!checkData.isProcessing && checkData.queueLength === 0) { 
+                            hideLoading(); btn.disabled = false; 
+                            resultDiv.className = 'result show success';
+                            resultDiv.innerHTML = `<h3>✅ Antrian Selesai</h3><p>Proses aktivasi telah selesai. Silakan klik tombol "Aktivasi" sekali lagi untuk melihat hasil.</p>`;
+                            clearInterval(queuePollingInterval); queuePollingInterval = null;
+                        } 
+                    }, 3000);
+                    return;
+                }
+                
                 hideLoading();
-                resultDiv.className = 'result show error';
-                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
+                if (data.success) {
+                    resultDiv.className = 'result show success';
+                    let html = `<h3>✨ Aktivasi Berhasil</h3><div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div><div class="result-item"><span class="result-label"> MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>`;
+                    if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') { const olt = parseOLTResult(data.data.olt); html += `<div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`; }
+                    resultDiv.innerHTML = html;
+                } else { 
+                    throw new Error(data.error || 'Gagal aktivasi'); 
+                }
+            } catch (err) { 
+                hideLoading(); resultDiv.className = 'result show error'; resultDiv.innerHTML = `<h3> Error</h3><p>${err.message}</p>`; 
+            } finally { 
+                if (!queuePollingInterval) btn.disabled = false; 
             }
         });
         
