@@ -1,4 +1,4 @@
-// index.js - RnBNET WEB DASHBOARD (Dengan Queue System)
+// index.js - RnBNET WEB DASHBOARD (Queue System FIXED)
 const path = require('path');
 const express = require('express');
 const RouterOSAPI = require('node-routeros').RouterOSAPI;
@@ -65,47 +65,55 @@ async function safeCloseMikrotik(api) {
 }
 
 // ==========================================
-// QUEUE SYSTEM
+// QUEUE SYSTEM (DIPERBAIKI)
 // ==========================================
 const requestQueue = [];
 let isProcessingQueue = false;
-let queueIdCounter = 0;
 
 async function enqueueTask(taskFn, username, serverLabel) {
-    queueIdCounter++;
-    const myQueueId = queueIdCounter;
-    
-    return new Promise((resolve, reject) => {
-        const task = async () => {
-            try { resolve(await taskFn()); } 
-            catch (err) { reject(err); }
+    // Jika sedang ada yang proses, masuk antrian
+    if (isProcessingQueue) {
+        const position = requestQueue.length + 1;
+        requestQueue.push({
+            execute: async () => {
+                try {
+                    await taskFn();
+                    console.log(`✅ [ANTRIAN SELESAI] ${username} (${serverLabel})`);
+                } catch (err) {
+                    console.error(`❌ [ANTRIAN GAGAL] ${username}: ${err.message}`);
+                }
+            },
+            username, 
+            server: serverLabel
+        });
+        console.log(`📋 [ANTRIAN] ${username} (${serverLabel}) masuk antrian posisi #${position}`);
+        return { 
+            queued: true, 
+            position, 
+            estimatedWait: position * 90 
         };
-        
-        if (isProcessingQueue) {
-            const position = requestQueue.length + 1;
-            requestQueue.push({ 
-                task, id: myQueueId, username, server: serverLabel, timestamp: new Date().toISOString() 
-            });
-            console.log(`📋 [ANTRIAN] ${username} (${serverLabel}) masuk antrian posisi #${position}`);
-            resolve({
-                queued: true, position, queueId: myQueueId,
-                message: `Anda berada di antrian ke-${position}.`,
-                estimatedWait: position * 90
-            });
-        } else {
-            isProcessingQueue = true;
-            console.log(`▶️ [PROSES] ${username} (${serverLabel}) sedang diproses`);
-            task().finally(() => processNextInQueue());
-            resolve({ queued: false });
+    } 
+    // Jika tidak ada antrian, proses LANGSUNG dan TUNGGU sampai selesai
+    else {
+        isProcessingQueue = true;
+        console.log(`▶️ [PROSES] ${username} (${serverLabel}) sedang diproses`);
+        try {
+            const result = await taskFn();
+            return { success: true, data: result };
+        } catch (err) {
+            return { success: false, error: err.message };
+        } finally {
+            processNextInQueue();
         }
-    });
+    }
 }
 
 async function processNextInQueue() {
     if (requestQueue.length > 0) {
         const next = requestQueue.shift();
         console.log(`▶️ [PROSES] ${next.username} (${next.server}) dari antrian #1`);
-        await next.task().finally(() => processNextInQueue());
+        await next.execute();
+        processNextInQueue();
     } else {
         isProcessingQueue = false;
         console.log(`✅ [SELESAI] Antrian kosong`);
@@ -124,8 +132,7 @@ app.get('/api/queue-status', (req, res) => {
     res.json({
         queueLength: requestQueue.length,
         isProcessing: isProcessingQueue,
-        currentProcessing: currentProcessing ? { username: currentProcessing.username, server: currentProcessing.server } : null,
-        waitingList: requestQueue.slice(1).map((item, index) => ({ position: index + 1, username: item.username, server: item.server }))
+        currentProcessing: currentProcessing ? { username: currentProcessing.username, server: currentProcessing.server } : null
     });
 });
 
@@ -135,25 +142,22 @@ app.post('/api/cek-redaman', async (req, res) => {
     if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
     
     let api;
-    try {
-        const queueResult = await enqueueTask(async () => {
-            const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
-            api = mikrotikApi;
-            const userObj = await getUserFromMikrotik(api, username);
-            let rawMac = userObj['caller-id'] || 'Any';
-            const activeUser = await getActiveUserFromMikrotik(api, username);
-            if (activeUser) rawMac = activeUser['caller-id'] || rawMac;
-            if (!rawMac || rawMac === 'Any') throw new Error('MAC Address tidak terbaca untuk user ini');
-            const mac = rawMac.trim().toLowerCase();
-            let oltText = 'ONU tidak ditemukan di OLT manapun';
-            await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
-            return { username, server: targetServer.label, mac, olt: oltText };
-        }, username, config.servers[serverKey]?.label || 'Unknown');
-        
-        if (queueResult.queued) return res.json(queueResult);
-        res.json({ success: true, data: queueResult });
-    } catch (err) { res.status(500).json({ error: err.message }); } 
-    finally { await safeCloseMikrotik(api); }
+    const result = await enqueueTask(async () => {
+        const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
+        api = mikrotikApi;
+        const userObj = await getUserFromMikrotik(api, username);
+        let rawMac = userObj['caller-id'] || 'Any';
+        const activeUser = await getActiveUserFromMikrotik(api, username);
+        if (activeUser) rawMac = activeUser['caller-id'] || rawMac;
+        if (!rawMac || rawMac === 'Any') throw new Error('MAC Address tidak terbaca untuk user ini');
+        const mac = rawMac.trim().toLowerCase();
+        let oltText = 'ONU tidak ditemukan di OLT manapun';
+        await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
+        return { username, server: targetServer.label, mac, olt: oltText };
+    }, username, config.servers[serverKey]?.label || 'Unknown');
+    
+    await safeCloseMikrotik(api);
+    res.json(result);
 });
 
 // API: Aktivasi
@@ -162,33 +166,30 @@ app.post('/api/aktivasi', async (req, res) => {
     if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
     
     let api;
-    try {
-        const queueResult = await enqueueTask(async () => {
-            const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
-            api = mikrotikApi;
-            const userObj = await getUserFromMikrotik(api, username);
-            await withTimeout(api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']), 15000, 'Timeout set disabled=no');
-            await new Promise(r => setTimeout(r, 2000));
-            const activeUser = await getActiveUserFromMikrotik(api, username);
-            let ip = userObj['remote-address'] || 'Dynamic';
-            let rawMac = userObj['caller-id'] || 'Any';
-            const paket = userObj.profile || 'default';
-            if (activeUser) { ip = activeUser.address || ip; rawMac = activeUser['caller-id'] || rawMac; }
-            const response = { username, server: targetServer.label, paket, ip, mac: rawMac, status: 'BERHASIL', olt: null };
-            if (rawMac && rawMac !== 'Any') {
-                const mac = rawMac.trim().toLowerCase(); response.mac = mac;
-                let oltText = 'ONU tidak ditemukan di OLT manapun';
-                await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
-                response.olt = oltText;
-            }
-            return response;
-        }, username, config.servers[serverKey]?.label || 'Unknown');
-        
-        if (queueResult.queued) return res.json(queueResult);
-        res.json({ success: true, data: queueResult });
-    } catch (err) { res.status(500).json({ error: err.message }); } 
-    finally { await safeCloseMikrotik(api); }
+    const result = await enqueueTask(async () => {
+        const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
+        api = mikrotikApi;
+        const userObj = await getUserFromMikrotik(api, username);
+        await withTimeout(api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']), 15000, 'Timeout set disabled=no');
+        await new Promise(r => setTimeout(r, 2000));
+        const activeUser = await getActiveUserFromMikrotik(api, username);
+        let ip = userObj['remote-address'] || 'Dynamic';
+        let rawMac = userObj['caller-id'] || 'Any';
+        const paket = userObj.profile || 'default';
+        if (activeUser) { ip = activeUser.address || ip; rawMac = activeUser['caller-id'] || rawMac; }
+        const response = { username, server: targetServer.label, paket, ip, mac: rawMac, status: 'BERHASIL', olt: null };
+        if (rawMac && rawMac !== 'Any') {
+            const mac = rawMac.trim().toLowerCase(); response.mac = mac;
+            let oltText = 'ONU tidak ditemukan di OLT manapun';
+            await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
+            response.olt = oltText;
+        }
+        return response;
+    }, username, config.servers[serverKey]?.label || 'Unknown');
+    
+    await safeCloseMikrotik(api);
+    res.json(result);
 });
 
-process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
+process.on('unhandledRejection', err => console.error(' UNHANDLED:', err));
 process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error('❌ UNCAUGHT:', err); });
