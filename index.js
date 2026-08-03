@@ -1,4 +1,4 @@
-// index.js - RnBNET WEB DASHBOARD (Queue System Complete)
+// index.js - RnBNET WEB DASHBOARD (Queue System dengan Auto-Result)
 const path = require('path');
 const express = require('express');
 const RouterOSAPI = require('node-routeros').RouterOSAPI;
@@ -65,35 +65,49 @@ async function safeCloseMikrotik(api) {
 }
 
 // ==========================================
-// QUEUE SYSTEM LENGKAP
+// QUEUE SYSTEM DENGAN AUTO-RESULT
 // ==========================================
 const requestQueue = [];
 let isProcessingQueue = false;
 let currentTask = null;
+const queueResults = new Map(); // Simpan hasil scan berdasarkan queueId
 
 async function enqueueTask(taskFn, username, serverLabel) {
+    const queueId = Date.now() + Math.random().toString(36).substr(2, 9);
+    
     if (isProcessingQueue) {
+        // Masuk antrian
         const position = requestQueue.length + 1;
         requestQueue.push({
             execute: taskFn,
             username, 
-            server: serverLabel
+            server: serverLabel,
+            queueId
         });
-        console.log(`📋 [ANTRIAN] ${username} (${serverLabel}) masuk antrian posisi #${position}`);
+        console.log(`📋 [ANTRIAN] ${username} (${serverLabel}) masuk antrian posisi #${position} [ID: ${queueId}]`);
+        
+        // Simpan status "pending" di results
+        queueResults.set(queueId, { status: 'pending', position });
+        
         return { 
             queued: true, 
             position, 
+            queueId,
             estimatedWait: position * 90 
         };
     } else {
+        // Proses langsung
         isProcessingQueue = true;
         currentTask = { username, server: serverLabel };
         console.log(`▶️ [PROSES] ${username} (${serverLabel}) sedang diproses`);
+        
         try {
             const result = await taskFn();
-            return { success: true, data: result };
+            queueResults.set(queueId, { status: 'done', data: result });
+            return { success: true, data: result, queueId };
         } catch (err) {
-            return { success: false, error: err.message };
+            queueResults.set(queueId, { status: 'error', error: err.message });
+            return { success: false, error: err.message, queueId };
         } finally {
             currentTask = null;
             processNextInQueue();
@@ -105,11 +119,15 @@ async function processNextInQueue() {
     if (requestQueue.length > 0) {
         const next = requestQueue.shift();
         currentTask = { username: next.username, server: next.server };
-        console.log(`▶️ [PROSES] ${next.username} (${next.server}) dari antrian #1`);
+        console.log(`▶️ [PROSES] ${next.username} (${next.server}) dari antrian #1 [ID: ${next.queueId}]`);
+        
         try {
-            await next.execute();
+            const result = await next.execute();
+            queueResults.set(next.queueId, { status: 'done', data: result });
+            console.log(`✅ [SELESAI] ${next.username} - hasil disimpan [ID: ${next.queueId}]`);
         } catch (err) {
-            console.error(`❌ [GAGAL] ${next.username}: ${err.message}`);
+            queueResults.set(next.queueId, { status: 'error', error: err.message });
+            console.error(` [GAGAL] ${next.username}: ${err.message}`);
         } finally {
             currentTask = null;
             processNextInQueue();
@@ -135,9 +153,46 @@ app.get('/api/queue-status', (req, res) => {
         waitingList: requestQueue.map((item, index) => ({
             position: index + 1,
             username: item.username,
-            server: item.server
+            server: item.server,
+            queueId: item.queueId
         }))
     });
+});
+
+// API: Cek Hasil Scan berdasarkan Queue ID
+app.get('/api/queue-result/:queueId', (req, res) => {
+    const { queueId } = req.params;
+    const result = queueResults.get(queueId);
+    
+    if (!result) {
+        return res.json({ status: 'not_found' });
+    }
+    
+    if (result.status === 'pending') {
+        return res.json({ 
+            status: 'pending', 
+            position: result.position 
+        });
+    }
+    
+    if (result.status === 'done') {
+        // Hapus dari Map setelah diambil (cleanup)
+        queueResults.delete(queueId);
+        return res.json({ 
+            status: 'done', 
+            success: true, 
+            data: result.data 
+        });
+    }
+    
+    if (result.status === 'error') {
+        queueResults.delete(queueId);
+        return res.json({ 
+            status: 'error', 
+            success: false, 
+            error: result.error 
+        });
+    }
 });
 
 // API: Cek Redaman
