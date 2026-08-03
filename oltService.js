@@ -273,20 +273,26 @@ async function cekDenganRetry(checkerFn, oltConfig, mac) {
 }
 
 // ==========================================
-// 5. SCAN SEMUA OLT (PARALEL - SUPER CEPAT!)
+// 5. SCAN SEMUA OLT (PARALEL - AUTO STOP!)
 // ==========================================
 async function scanSemuaOlt(oltList, mac, onFound) {
     console.log(`\n========================================`);
-    console.log(` MULAI SCAN ${oltList.length} OLT (PARALEL)...`);
+    console.log(`🚀 MULAI SCAN ${oltList.length} OLT (PARALEL - AUTO STOP)...`);
     console.log(`========================================`);
     
-    let finalResult = null;
+    let foundResult = null;
     
-    // Buat array promise untuk semua OLT agar jalan bersamaan
+    // Buat array promise untuk semua OLT
     const scanPromises = oltList.map(async (olt) => {
-        let hasil = null;
-        
         try {
+            // Cek apakah sudah ada yang menemukan
+            if (foundResult) {
+                console.log(`   ⏭️ [${olt.label}] Skip scan, sudah ditemukan di OLT lain`);
+                return null;
+            }
+            
+            let hasil = null;
+            
             if (olt.type === 'HSAirpo') {
                 hasil = olt.method === 'cibarola'
                     ? await cekDenganRetry(cekRedamanHSAirpoCibarola, olt, mac)
@@ -295,23 +301,31 @@ async function scanSemuaOlt(oltList, mac, onFound) {
                 hasil = await cekDenganRetry(cekRedamanHioso, olt, mac);
             }
             
-            // Jika berhasil dan belum ada OLT lain yang menang
-            if (hasil && !hasil.error && !finalResult) {
-                finalResult = hasil;
-                console.log(`\n✅ KETEMU di ${hasil.olt_name}!`);
-                const teksHasil = `\n✅ *${hasil.olt_name}*\n    Redaman: *${hasil.redaman}*\n   📡 Status: ${hasil.status}`;
-                await onFound(teksHasil);
+            // Jika berhasil dan belum ada yang menemukan
+            if (hasil && !hasil.error) {
+                // Cek sekali lagi (race condition)
+                if (!foundResult) {
+                    foundResult = hasil;
+                    console.log(`\n✅ KETEMU di ${hasil.olt_name}!`);
+                    console.log(`   📉 Redaman: ${hasil.redaman}`);
+                    
+                    // LANGSUNG KIRIM KE WEB DASHBOARD
+                    const teksHasil = `\n✅ *${hasil.olt_name}*\n   📉 Redaman: *${hasil.redaman}*\n   📡 Status: ${hasil.status}`;
+                    await onFound(teksHasil);
+                    
+                    console.log(`   📤 Hasil dikirim ke web dashboard`);
+                }
             }
         } catch (err) {
-            console.error(`   ❌ [${olt.label}] Error saat scan: ${err.message}`);
+            console.error(`   ❌ [${olt.label}] Error: ${err.message}`);
         }
     });
     
-    // Jalankan semua scan secara bersamaan dan tunggu sampai semua selesai (atau yang menang sudah diproses)
+    // Jalankan semua scan bersamaan
     await Promise.all(scanPromises);
     
-    if (!finalResult) {
-        console.log(`\n Tidak ketemu di OLT manapun.`);
+    if (!foundResult) {
+        console.log(`\n❌ Tidak ketemu di OLT manapun.`);
         console.log(`========================================\n`);
         return false;
     }
