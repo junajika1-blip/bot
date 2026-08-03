@@ -1,594 +1,194 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RnBNET - Cek Redaman & Aktivasi</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            min-height: 100vh; 
-            padding: 20px; 
-        }
-        .container { max-width: 700px; margin: 0 auto; }
-        .header { text-align: center; color: white; margin-bottom: 30px; }
-        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
-        .header p { font-size: 14px; opacity: 0.9; }
-        
-        /* QUEUE STATUS BAR */
-        .queue-status-bar {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            display: none;
-            align-items: center;
-            justify-content: space-between;
-            color: white;
-            font-size: 14px;
-            animation: slideDown 0.3s ease;
-        }
-        .queue-status-bar.show { display: flex; }
-        .queue-status-bar .queue-info { display: flex; align-items: center; gap: 10px; }
-        .queue-status-bar .queue-count { 
-            background: rgba(255,255,255,0.3); 
-            padding: 4px 12px; 
-            border-radius: 20px; 
-            font-weight: 700;
-        }
-        
-        /* TAB NAVIGATION */
-        .tab-nav {
-            display: flex;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            padding: 5px;
-            margin-bottom: 25px;
-            backdrop-filter: blur(10px);
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            background: transparent;
-            color: white;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .tab-btn.active {
-            background: white;
-            color: #667eea;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        /* SLIDER */
-        .slider-container { position: relative; overflow: hidden; border-radius: 20px; }
-        .slider-wrapper { display: flex; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .slide { min-width: 100%; }
-        
-        /* CARD */
-        .card { 
-            background: rgba(255, 255, 255, 0.98); 
-            border-radius: 20px; 
-            padding: 30px; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
-        }
-        .card-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
-        .card-icon { 
-            width: 55px; height: 55px; 
-            border-radius: 15px; 
-            display: flex; align-items: center; justify-content: center; 
-            font-size: 26px; 
-        }
-        .card-cek .card-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .card-aktivasi .card-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .card-header h2 { font-size: 22px; color: #333; font-weight: 700; }
-        
-        .form-group { margin-bottom: 18px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 14px; }
-        .form-group select, .form-group input { 
-            width: 100%; padding: 14px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 12px; 
-            font-size: 15px; 
-            background: #f8f9fa; 
-        }
-        .form-group select:focus, .form-group input:focus { 
-            outline: none; border-color: #667eea; background: white; 
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
-        }
-        .btn { 
-            width: 100%; padding: 16px; 
-            border: none; border-radius: 12px; 
-            font-size: 16px; font-weight: 700; 
-            cursor: pointer; 
-            display: flex; align-items: center; justify-content: center; gap: 10px; 
-        }
-        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .btn-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        
-        .result { margin-top: 25px; padding: 20px; border-radius: 15px; display: none; }
-        .result.show { display: block; animation: slideIn 0.5s ease; }
-        .result.success { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; color: #155724; }
-        .result.error { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545; color: #721c24; }
-        .result h3 { margin-bottom: 18px; font-size: 18px; font-weight: 700; }
-        .result-item { margin-bottom: 10px; display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.1); }
-        .result-item:last-child { border-bottom: none; }
-        .result-label { font-weight: 600; color: #555; min-width: 110px; font-size: 14px; }
-        .result-value { color: #333; flex: 1; word-break: break-all; font-size: 14px; }
-        
-        .olt-result { 
-            margin-top: 18px; padding: 18px; 
-            background: white; border-radius: 12px; 
-            border-left: 4px solid #28a745;
-        }
-        .olt-result h4 { color: #28a745; margin-bottom: 12px; font-size: 16px; }
-        .olt-info { display: flex; flex-direction: column; gap: 8px; }
-        .olt-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; }
-        .olt-label { font-weight: 600; color: #555; min-width: 90px; font-size: 14px; }
-        .olt-value { color: #333; flex: 1; font-size: 14px; }
-        .olt-value strong { color: #28a745; font-weight: 700; }
-        
-        /* LOADING OVERLAY DENGAN QUEUE INFO */
-        .loading-overlay {
-            position: fixed; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(5px);
-            display: none; align-items: center; justify-content: center;
-            z-index: 9999;
-        }
-        .loading-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
-        .loading-content {
-            background: white; border-radius: 20px;
-            padding: 35px; text-align: center;
-            max-width: 450px; width: 90%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            animation: slideUp 0.5s ease;
-        }
-        .spinner-ring {
-            display: inline-block; position: relative;
-            width: 70px; height: 70px; margin-bottom: 20px;
-        }
-        .spinner-ring div {
-            box-sizing: border-box; display: block; position: absolute;
-            width: 56px; height: 56px; margin: 7px;
-            border: 4px solid #667eea; border-radius: 50%;
-            animation: spinner-ring 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-            border-color: #667eea transparent transparent transparent;
-        }
-        .spinner-ring div:nth-child(1) { animation-delay: -0.45s; }
-        .spinner-ring div:nth-child(2) { animation-delay: -0.3s; }
-        .spinner-ring div:nth-child(3) { animation-delay: -0.15s; }
-        
-        .loading-title { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 12px; }
-        .loading-message { font-size: 14px; color: #666; margin-bottom: 18px; line-height: 1.5; }
-        
-        /* QUEUE INFO BOX */
-        .queue-info-box {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 2px solid #f39c12;
-            border-radius: 12px;
-            padding: 15px;
-            margin: 15px 0;
-        }
-        .queue-info-box .queue-position {
-            font-size: 24px;
-            font-weight: 700;
-            color: #d63031;
-            margin-bottom: 5px;
-        }
-        .queue-info-box .queue-wait {
-            font-size: 13px;
-            color: #666;
-        }
-        .queue-info-box .queue-list {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(0,0,0,0.1);
-            font-size: 12px;
-            color: #555;
-        }
-        
-        .loading-warning {
-            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-            border: 2px solid #e74c3c;
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 15px;
-        }
-        .loading-warning strong { color: #c0392b; font-weight: 700; display: block; margin-bottom: 4px; font-size: 15px; }
-        .loading-warning p { color: #666; font-size: 13px; }
-        
-        .progress-bar {
-            width: 100%; height: 6px; background: #f0f0f0;
-            border-radius: 3px; margin-top: 18px; overflow: hidden;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            animation: progress 2s ease-in-out infinite;
-        }
-        
-        @keyframes spinner-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        @keyframes progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        @media (max-width: 768px) { 
-            .header h1 { font-size: 22px; } 
-            .card { padding: 22px; }
-            .tab-btn { font-size: 13px; padding: 12px 8px; }
-        }
-    </style>
-</head>
-<body>
-    <!-- QUEUE STATUS BAR -->
-    <div class="queue-status-bar" id="queueStatusBar">
-        <div class="queue-info">
-            <span>📋 Antrian Aktif:</span>
-            <span class="queue-count" id="queueCount">0</span>
-        </div>
-        <div id="currentProcessing">-</div>
-    </div>
+// index.js - RnBNET WEB DASHBOARD (Dengan Queue System)
+const path = require('path');
+const express = require('express');
+const RouterOSAPI = require('node-routeros').RouterOSAPI;
+const config = require('./config');
+const { scanSemuaOlt } = require('./oltService');
+
+const app = express();
+app.use(express.json());
+app.use(express.static(path.join(__dirname)));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => console.log(` WEB DASHBOARD RUNNING ON PORT ${PORT}`));
+
+// Helper Timeout
+function withTimeout(promise, ms, errMsg) {
+    let timeoutId;
+    const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(errMsg)), ms);
+    });
+    return Promise.race([promise.finally(() => clearTimeout(timeoutId)), timeoutPromise]);
+}
+
+async function connectMikrotik(serverKey) {
+    const targetServer = config.servers[serverKey];
+    if (!targetServer) throw new Error(`Server "${serverKey}" tidak ditemukan`);
+    const api = new RouterOSAPI({
+        host: targetServer.mikrotik.host,
+        port: targetServer.mikrotik.port,
+        user: targetServer.mikrotik.user,
+        password: targetServer.mikrotik.pass,
+        timeout: 15
+    });
+    try {
+        await withTimeout(api.connect(), 15000, `Timeout koneksi ke MikroTik ${targetServer.label}.`);
+        return { api, targetServer };
+    } catch (err) {
+        safeCloseMikrotik(api).catch(() => {});
+        throw new Error(`Gagal konek MikroTik ${targetServer.label}. Cek port API atau network.`);
+    }
+}
+
+async function getUserFromMikrotik(api, username) {
+    let secrets = await withTimeout(api.write('/ppp/secret/print', [`?name=${username}`]), 25000, 'Timeout Query Secret.');
+    let userObj = secrets.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
+    if (userObj) return userObj;
+    secrets = await withTimeout(api.write('/ppp/secret/print'), 25000, 'Timeout Query Secret Full Scan.');
+    userObj = secrets.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
+    if (!userObj) throw new Error(`User "${username}" tidak ditemukan`);
+    return userObj;
+}
+
+async function getActiveUserFromMikrotik(api, username) {
+    let activeUsers = await withTimeout(api.write('/ppp/active/print', [`?name=${username}`]), 25000, 'Timeout Query Active.');
+    let found = activeUsers.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
+    if (found) return found;
+    activeUsers = await withTimeout(api.write('/ppp/active/print'), 25000, 'Timeout Query Active Full Scan.');
+    return activeUsers.find(x => x.name && x.name.trim().toLowerCase() === username.trim().toLowerCase());
+}
+
+async function safeCloseMikrotik(api) {
+    if (!api) return;
+    try { await withTimeout(api.close(), 5000, 'Close timeout'); } catch (e) {}
+}
+
+// ==========================================
+// QUEUE SYSTEM
+// ==========================================
+const requestQueue = [];
+let isProcessingQueue = false;
+let queueIdCounter = 0;
+
+async function enqueueTask(taskFn, username, serverLabel) {
+    queueIdCounter++;
+    const myQueueId = queueIdCounter;
     
-    <!-- LOADING OVERLAY -->
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-content">
-            <div class="spinner-ring"><div></div><div></div><div></div><div></div></div>
-            <div class="loading-title" id="loadingTitle">⏳ Sedang Memproses...</div>
-            <div class="loading-message" id="loadingMessage">
-                Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan.
-            </div>
-            
-            <!-- Queue Info (muncul saat antrian) -->
-            <div class="queue-info-box" id="queueInfoBox" style="display: none;">
-                <div class="queue-position" id="queuePosition">Antrian #1</div>
-                <div class="queue-wait" id="queueWait">Estimasi tunggu: ~90 detik</div>
-                <div class="queue-list" id="queueList"></div>
-            </div>
-            
-            <div class="progress-bar"><div class="progress-fill"></div></div>
-            
-            <div class="loading-warning">
-                <strong>⚠️ JANGAN REFRESH HALAMAN!</strong>
-                <p>Harap tunggu hingga proses selesai. Refresh akan membatalkan proses.</p>
-            </div>
-        </div>
-    </div>
+    return new Promise((resolve, reject) => {
+        const task = async () => {
+            try { resolve(await taskFn()); } 
+            catch (err) { reject(err); }
+        };
+        
+        if (isProcessingQueue) {
+            const position = requestQueue.length + 1;
+            requestQueue.push({ 
+                task, id: myQueueId, username, server: serverLabel, timestamp: new Date().toISOString() 
+            });
+            console.log(`📋 [ANTRIAN] ${username} (${serverLabel}) masuk antrian posisi #${position}`);
+            resolve({
+                queued: true, position, queueId: myQueueId,
+                message: `Anda berada di antrian ke-${position}.`,
+                estimatedWait: position * 90
+            });
+        } else {
+            isProcessingQueue = true;
+            console.log(`▶️ [PROSES] ${username} (${serverLabel}) sedang diproses`);
+            task().finally(() => processNextInQueue());
+            resolve({ queued: false });
+        }
+    });
+}
+
+async function processNextInQueue() {
+    if (requestQueue.length > 0) {
+        const next = requestQueue.shift();
+        console.log(`▶️ [PROSES] ${next.username} (${next.server}) dari antrian #1`);
+        await next.task().finally(() => processNextInQueue());
+    } else {
+        isProcessingQueue = false;
+        console.log(`✅ [SELESAI] Antrian kosong`);
+    }
+}
+
+// API: Daftar Server
+app.get('/api/servers', (req, res) => {
+    const servers = Object.keys(config.servers).map(key => ({ key, label: config.servers[key].label }));
+    res.json({ servers });
+});
+
+// API: Cek Status Antrian
+app.get('/api/queue-status', (req, res) => {
+    const currentProcessing = requestQueue.length > 0 ? requestQueue[0] : null;
+    res.json({
+        queueLength: requestQueue.length,
+        isProcessing: isProcessingQueue,
+        currentProcessing: currentProcessing ? { username: currentProcessing.username, server: currentProcessing.server } : null,
+        waitingList: requestQueue.slice(1).map((item, index) => ({ position: index + 1, username: item.username, server: item.server }))
+    });
+});
+
+// API: Cek Redaman
+app.post('/api/cek-redaman', async (req, res) => {
+    const { serverKey, username } = req.body;
+    if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
     
-    <div class="container">
-        <div class="header">
-            <h1>Cek Redaman OLT & Aktivasi Pelanggan</h1>
-            <p>RnBNET Network Management System</p>
-        </div>
+    let api;
+    try {
+        const queueResult = await enqueueTask(async () => {
+            const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
+            api = mikrotikApi;
+            const userObj = await getUserFromMikrotik(api, username);
+            let rawMac = userObj['caller-id'] || 'Any';
+            const activeUser = await getActiveUserFromMikrotik(api, username);
+            if (activeUser) rawMac = activeUser['caller-id'] || rawMac;
+            if (!rawMac || rawMac === 'Any') throw new Error('MAC Address tidak terbaca untuk user ini');
+            const mac = rawMac.trim().toLowerCase();
+            let oltText = 'ONU tidak ditemukan di OLT manapun';
+            await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
+            return { username, server: targetServer.label, mac, olt: oltText };
+        }, username, config.servers[serverKey]?.label || 'Unknown');
         
-        <!-- TAB NAVIGATION -->
-        <div class="tab-nav">
-            <button class="tab-btn active" data-tab="0">🔍 Cek Redaman</button>
-            <button class="tab-btn" data-tab="1">⚡ Aktivasi</button>
-        </div>
-        
-        <!-- SLIDER -->
-        <div class="slider-container" id="sliderContainer">
-            <div class="slider-wrapper" id="sliderWrapper">
-                <!-- SLIDE 1: CEK REDAMAN -->
-                <div class="slide">
-                    <div class="card card-cek">
-                        <div class="card-header">
-                            <div class="card-icon">🔍</div>
-                            <h2>Cek Redaman OLT</h2>
-                        </div>
-                        <form id="formCek">
-                            <div class="form-group">
-                                <label>Pilih Server</label>
-                                <select id="serverCek" required><option value="">-- Pilih Server --</option></select>
-                            </div>
-                            <div class="form-group">
-                                <label>Username Pelanggan</label>
-                                <input type="text" id="usernameCek" placeholder="Contoh: liacahyani" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary" id="btnCek"><span>🔍 Cek Redaman</span></button>
-                        </form>
-                        <div id="resultCek" class="result"></div>
-                    </div>
-                </div>
-                
-                <!-- SLIDE 2: AKTIVASI -->
-                <div class="slide">
-                    <div class="card card-aktivasi">
-                        <div class="card-header">
-                            <div class="card-icon">⚡</div>
-                            <h2>Aktivasi Pelanggan Isolir</h2>
-                        </div>
-                        <form id="formAktivasi">
-                            <div class="form-group">
-                                <label>Pilih Server</label>
-                                <select id="serverAktivasi" required><option value="">-- Pilih Server --</option></select>
-                            </div>
-                            <div class="form-group">
-                                <label>Username Pelanggan</label>
-                                <input type="text" id="usernameAktivasi" placeholder="Contoh: liacahyani" required>
-                            </div>
-                            <button type="submit" class="btn btn-secondary" id="btnAktivasi"><span> Aktivasi Sekarang</span></button>
-                        </form>
-                        <div id="resultAktivasi" class="result"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+        if (queueResult.queued) return res.json(queueResult);
+        res.json({ success: true, data: queueResult });
+    } catch (err) { res.status(500).json({ error: err.message }); } 
+    finally { await safeCloseMikrotik(api); }
+});
+
+// API: Aktivasi
+app.post('/api/aktivasi', async (req, res) => {
+    const { serverKey, username } = req.body;
+    if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
     
-    <script>
-        // TAB & SLIDER LOGIC
-        let currentTab = 0;
-        const sliderWrapper = document.getElementById('sliderWrapper');
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        
-        function switchTab(index) {
-            currentTab = index;
-            sliderWrapper.style.transform = `translateX(-${index * 100}%)`;
-            tabBtns.forEach((btn, i) => btn.classList.toggle('active', i === index));
-        }
-        
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => switchTab(parseInt(btn.dataset.tab)));
-        });
-        
-        // SWIPE SUPPORT
-        let touchStartX = 0, touchEndX = 0;
-        const sliderContainer = document.getElementById('sliderContainer');
-        
-        sliderContainer.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-        sliderContainer.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            const diff = touchStartX - touchEndX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0 && currentTab < 1) switchTab(currentTab + 1);
-                else if (diff < 0 && currentTab > 0) switchTab(currentTab - 1);
+    let api;
+    try {
+        const queueResult = await enqueueTask(async () => {
+            const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
+            api = mikrotikApi;
+            const userObj = await getUserFromMikrotik(api, username);
+            await withTimeout(api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']), 15000, 'Timeout set disabled=no');
+            await new Promise(r => setTimeout(r, 2000));
+            const activeUser = await getActiveUserFromMikrotik(api, username);
+            let ip = userObj['remote-address'] || 'Dynamic';
+            let rawMac = userObj['caller-id'] || 'Any';
+            const paket = userObj.profile || 'default';
+            if (activeUser) { ip = activeUser.address || ip; rawMac = activeUser['caller-id'] || rawMac; }
+            const response = { username, server: targetServer.label, paket, ip, mac: rawMac, status: 'BERHASIL', olt: null };
+            if (rawMac && rawMac !== 'Any') {
+                const mac = rawMac.trim().toLowerCase(); response.mac = mac;
+                let oltText = 'ONU tidak ditemukan di OLT manapun';
+                await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
+                response.olt = oltText;
             }
-        }, { passive: true });
+            return response;
+        }, username, config.servers[serverKey]?.label || 'Unknown');
         
-        // QUEUE STATUS POLLING
-        let queuePollingInterval;
-        
-        async function updateQueueStatus() {
-            try {
-                const res = await fetch('/api/queue-status');
-                const data = await res.json();
-                const statusBar = document.getElementById('queueStatusBar');
-                const queueCount = document.getElementById('queueCount');
-                const currentProcessing = document.getElementById('currentProcessing');
-                
-                if (data.isProcessing || data.queueLength > 0) {
-                    statusBar.classList.add('show');
-                    queueCount.textContent = data.queueLength;
-                    if (data.currentProcessing) {
-                        currentProcessing.textContent = `🔄 ${data.currentProcessing.username} (${data.currentProcessing.server})`;
-                    }
-                } else {
-                    statusBar.classList.remove('show');
-                }
-            } catch (err) { console.error('Gagal update queue status:', err); }
-        }
-        
-        // LOAD SERVERS
-        async function loadServers() {
-            try {
-                const res = await fetch('/api/servers');
-                const data = await res.json();
-                const selectCek = document.getElementById('serverCek');
-                const selectAktivasi = document.getElementById('serverAktivasi');
-                data.servers.forEach(server => {
-                    selectCek.add(new Option(server.label, server.key));
-                    selectAktivasi.add(new Option(server.label, server.key));
-                });
-            } catch (err) { console.error('Gagal load servers:', err); }
-        }
-        
-        function showLoading(isQueued = false, position = 0, estimatedWait = 0) {
-            const overlay = document.getElementById('loadingOverlay');
-            const title = document.getElementById('loadingTitle');
-            const message = document.getElementById('loadingMessage');
-            const queueInfoBox = document.getElementById('queueInfoBox');
-            const queuePosition = document.getElementById('queuePosition');
-            const queueWait = document.getElementById('queueWait');
-            
-            overlay.classList.add('show');
-            
-            if (isQueued) {
-                title.textContent = '⏳ Anda Dalam Antrian';
-                message.textContent = 'Teknisi lain sedang melakukan scan. Mohon tunggu giliran Anda.';
-                queueInfoBox.style.display = 'block';
-                queuePosition.textContent = `Antrian #${position}`;
-                queueWait.textContent = `Estimasi tunggu: ~${Math.round(estimatedWait / 60)} menit ${estimatedWait % 60} detik`;
-            } else {
-                title.textContent = '⏳ Sedang Memproses...';
-                message.textContent = 'Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan.';
-                queueInfoBox.style.display = 'none';
-            }
-        }
-        
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('show');
-            if (queuePollingInterval) {
-                clearInterval(queuePollingInterval);
-                queuePollingInterval = null;
-            }
-        }
-        
-        function parseOLTResult(oltText) {
-            const lines = oltText.split('\n').filter(line => line.trim());
-            const oltName = lines[0]?.replace(/[✅*]/g, '').trim() || 'OLT';
-            const redaman = lines[1]?.match(/Redaman:\s*\*?([^\*]*)\*?/)?.[1].trim() || 'N/A';
-            const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Unknown';
-            return { oltName, redaman, status };
-        }
-        
-        // FORM CEK REDAMAN
-        document.getElementById('formCek').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const serverKey = document.getElementById('serverCek').value;
-            const username = document.getElementById('usernameCek').value.trim();
-            const resultDiv = document.getElementById('resultCek');
-            const btn = document.getElementById('btnCek');
-            
-            btn.disabled = true;
-            resultDiv.classList.remove('show');
-            
-            try {
-                const res = await fetch('/api/cek-redaman', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ serverKey, username })
-                });
-                const data = await res.json();
-                
-                if (data.queued) {
-                    showLoading(true, data.position, data.estimatedWait);
-                    
-                    // Polling queue status setiap 3 detik
-                    queuePollingInterval = setInterval(async () => {
-                        await updateQueueStatus();
-                        
-                        // Cek apakah sudah diproses
-                        const checkRes = await fetch('/api/queue-status');
-                        const checkData = await checkRes.json();
-                        if (!checkData.isProcessing && checkData.queueLength === 0) {
-                            hideLoading();
-                            btn.disabled = false;
-                            resultDiv.className = 'result show error';
-                            resultDiv.innerHTML = `<h3>⚠️ Antrian Selesai</h3><p>Proses Anda telah selesai. Silakan cek kembali atau refresh halaman untuk melihat hasil.</p>`;
-                        }
-                    }, 3000);
-                    
-                    return;
-                }
-                
-                hideLoading();
-                
-                if (data.success) {
-                    resultDiv.className = 'result show success';
-                    const olt = parseOLTResult(data.data.olt);
-                    resultDiv.innerHTML = `
-                        <h3>📊 Hasil Cek Redaman OLT</h3>
-                        <div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div>
-                        <div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div>
-                        <div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>
-                        <div class="olt-result">
-                            <h4> ${olt.oltName}</h4>
-                            <div class="olt-info">
-                                <div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div>
-                                <div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    throw new Error(data.error || 'Gagal cek redaman');
-                }
-            } catch (err) {
-                hideLoading();
-                resultDiv.className = 'result show error';
-                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
-            } finally {
-                if (!queuePollingInterval) btn.disabled = false;
-            }
-        });
-        
-        // FORM AKTIVASI
-        document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const serverKey = document.getElementById('serverAktivasi').value;
-            const username = document.getElementById('usernameAktivasi').value.trim();
-            const resultDiv = document.getElementById('resultAktivasi');
-            const btn = document.getElementById('btnAktivasi');
-            
-            btn.disabled = true;
-            resultDiv.classList.remove('show');
-            
-            try {
-                const res = await fetch('/api/aktivasi', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ serverKey, username })
-                });
-                const data = await res.json();
-                
-                if (data.queued) {
-                    showLoading(true, data.position, data.estimatedWait);
-                    
-                    queuePollingInterval = setInterval(async () => {
-                        await updateQueueStatus();
-                        
-                        const checkRes = await fetch('/api/queue-status');
-                        const checkData = await checkRes.json();
-                        if (!checkData.isProcessing && checkData.queueLength === 0) {
-                            hideLoading();
-                            btn.disabled = false;
-                            resultDiv.className = 'result show error';
-                            resultDiv.innerHTML = `<h3>⚠️ Antrian Selesai</h3><p>Proses Anda telah selesai. Silakan cek kembali atau refresh halaman untuk melihat hasil.</p>`;
-                        }
-                    }, 3000);
-                    
-                    return;
-                }
-                
-                hideLoading();
-                
-                if (data.success) {
-                    resultDiv.className = 'result show success';
-                    let html = `
-                        <h3>✨ Aktivasi Berhasil</h3>
-                        <div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div>
-                        <div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div>
-                        <div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div>
-                        <div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div>
-                        <div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div>
-                        <div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>
-                    `;
-                    if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') {
-                        const olt = parseOLTResult(data.data.olt);
-                        html += `
-                            <div class="olt-result">
-                                <h4>📡 ${olt.oltName}</h4>
-                                <div class="olt-info">
-                                    <div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div>
-                                    <div class="olt-item"><span class="olt-label"> Status:</span><span class="olt-value">${olt.status}</span></div>
-                                </div>
-                            </div>
-                        `;
-                    }
-                    resultDiv.innerHTML = html;
-                } else {
-                    throw new Error(data.error || 'Gagal aktivasi');
-                }
-            } catch (err) {
-                hideLoading();
-                resultDiv.className = 'result show error';
-                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
-            } finally {
-                if (!queuePollingInterval) btn.disabled = false;
-            }
-        });
-        
-        // Start queue status polling
-        updateQueueStatus();
-        setInterval(updateQueueStatus, 5000); // Update setiap 5 detik
-        
-        loadServers();
-    </script>
-</body>
-</html>
+        if (queueResult.queued) return res.json(queueResult);
+        res.json({ success: true, data: queueResult });
+    } catch (err) { res.status(500).json({ error: err.message }); } 
+    finally { await safeCloseMikrotik(api); }
+});
+
+process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
+process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error('❌ UNCAUGHT:', err); });
