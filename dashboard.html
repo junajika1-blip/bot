@@ -12,29 +12,84 @@
             min-height: 100vh; 
             padding: 20px; 
         }
-        .container { max-width: 1200px; margin: 0 auto; }
-        .header { text-align: center; color: white; margin-bottom: 40px; }
-        .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
-        .header p { font-size: 16px; opacity: 0.9; }
-        .cards-wrapper { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 30px; margin-bottom: 30px; }
-        .card { 
-            background: rgba(255, 255, 255, 0.95); 
-            border-radius: 20px; 
-            padding: 35px; 
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
-            backdrop-filter: blur(10px); 
+        .container { max-width: 700px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        
+        /* TAB NAVIGATION */
+        .tab-nav {
+            display: flex;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 5px;
+            margin-bottom: 25px;
+            backdrop-filter: blur(10px);
         }
-        .card:hover { transform: translateY(-10px); box-shadow: 0 30px 80px rgba(0,0,0,0.4); }
+        .tab-btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .tab-btn:not(.active):hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        /* SLIDER CONTAINER */
+        .slider-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+        }
+        .slider-wrapper {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .slide {
+            min-width: 100%;
+            padding: 0;
+        }
+        
+        /* CARD */
+        .card { 
+            background: rgba(255, 255, 255, 0.98); 
+            border-radius: 20px; 
+            padding: 30px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
         .card-icon { 
-            width: 60px; height: 60px; 
+            width: 55px; height: 55px; 
             border-radius: 15px; 
             display: flex; align-items: center; justify-content: center; 
-            font-size: 28px; margin-bottom: 20px; 
+            font-size: 26px; 
         }
         .card-cek .card-icon { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .card-aktivasi .card-icon { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-        .card h2 { font-size: 24px; margin-bottom: 25px; color: #333; font-weight: 700; }
-        .form-group { margin-bottom: 20px; }
+        .card-header h2 { font-size: 22px; color: #333; font-weight: 700; }
+        
+        .form-group { margin-bottom: 18px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #555; font-size: 14px; }
         .form-group select, .form-group input { 
             width: 100%; padding: 14px; 
@@ -42,6 +97,7 @@
             border-radius: 12px; 
             font-size: 15px; 
             background: #f8f9fa; 
+            transition: all 0.3s ease;
         }
         .form-group select:focus, .form-group input:focus { 
             outline: none; 
@@ -55,87 +111,250 @@
             font-size: 16px; font-weight: 700; 
             cursor: pointer; 
             display: flex; align-items: center; justify-content: center; gap: 10px; 
+            transition: all 0.3s ease;
         }
         .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .btn-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        
         .result { 
-            margin-top: 25px; padding: 25px; 
+            margin-top: 25px; padding: 20px; 
             border-radius: 15px; display: none; 
         }
-        .result.show { display: block; }
+        .result.show { display: block; animation: slideIn 0.5s ease; }
         .result.success { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; color: #155724; }
         .result.error { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545; color: #721c24; }
-        .result h3 { margin-bottom: 20px; font-size: 20px; font-weight: 700; }
-        .result-item { margin-bottom: 12px; display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .result h3 { margin-bottom: 18px; font-size: 18px; font-weight: 700; }
+        .result-item { margin-bottom: 10px; display: flex; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.1); }
         .result-item:last-child { border-bottom: none; }
-        .result-label { font-weight: 600; color: #555; min-width: 120px; }
-        .result-value { color: #333; flex: 1; word-break: break-all; }
+        .result-label { font-weight: 600; color: #555; min-width: 110px; font-size: 14px; }
+        .result-value { color: #333; flex: 1; word-break: break-all; font-size: 14px; }
+        
         .olt-result { 
-            margin-top: 20px; padding: 20px; 
+            margin-top: 18px; padding: 18px; 
             background: white; border-radius: 12px; 
-            border-left: 4px solid #28a745; 
+            border-left: 4px solid #28a745;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
-        .olt-result h4 { color: #28a745; margin-bottom: 15px; font-size: 18px; }
-        .loading { 
-            display: inline-block; width: 20px; height: 20px; 
-            border: 3px solid rgba(255,255,255,0.3); 
-            border-radius: 50%; 
-            border-top-color: white; 
-            animation: spin 1s ease-in-out infinite; 
+        .olt-result h4 { 
+            color: #28a745; margin-bottom: 12px; font-size: 16px;
+            display: flex; align-items: center; gap: 8px;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .olt-info { display: flex; flex-direction: column; gap: 8px; }
+        .olt-item { display: flex; align-items: flex-start; gap: 10px; padding: 6px 0; }
+        .olt-label { font-weight: 600; color: #555; min-width: 90px; font-size: 14px; }
+        .olt-value { color: #333; flex: 1; font-size: 14px; }
+        .olt-value strong { color: #28a745; font-weight: 700; }
+        
+        /* SWIPE INDICATOR */
+        .swipe-hint {
+            text-align: center;
+            color: rgba(255,255,255,0.7);
+            font-size: 12px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        
+        /* LOADING OVERLAY */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            display: none; align-items: center; justify-content: center;
+            z-index: 9999;
+        }
+        .loading-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+        .loading-content {
+            background: white; border-radius: 20px;
+            padding: 35px; text-align: center;
+            max-width: 450px; width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: slideUp 0.5s ease;
+        }
+        .spinner-ring {
+            display: inline-block; position: relative;
+            width: 70px; height: 70px; margin-bottom: 20px;
+        }
+        .spinner-ring div {
+            box-sizing: border-box; display: block; position: absolute;
+            width: 56px; height: 56px; margin: 7px;
+            border: 4px solid #667eea; border-radius: 50%;
+            animation: spinner-ring 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+            border-color: #667eea transparent transparent transparent;
+        }
+        .spinner-ring div:nth-child(1) { animation-delay: -0.45s; }
+        .spinner-ring div:nth-child(2) { animation-delay: -0.3s; }
+        .spinner-ring div:nth-child(3) { animation-delay: -0.15s; }
+        .loading-title { font-size: 20px; font-weight: 700; color: #333; margin-bottom: 12px; }
+        .loading-message { font-size: 14px; color: #666; margin-bottom: 18px; line-height: 1.5; }
+        .loading-warning {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border: 2px solid #f39c12; border-radius: 10px;
+            padding: 12px; margin-top: 15px;
+        }
+        .loading-warning strong { color: #d63031; font-weight: 700; display: block; margin-bottom: 4px; font-size: 15px; }
+        .loading-warning p { color: #666; font-size: 13px; }
+        .progress-bar {
+            width: 100%; height: 6px; background: #f0f0f0;
+            border-radius: 3px; margin-top: 18px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 3px;
+            animation: progress 2s ease-in-out infinite;
+        }
+        
+        @keyframes spinner-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes progress { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
         @media (max-width: 768px) { 
-            .cards-wrapper { grid-template-columns: 1fr; } 
-            .header h1 { font-size: 24px; } 
+            .header h1 { font-size: 22px; } 
+            .card { padding: 22px; }
+            .tab-btn { font-size: 13px; padding: 12px 8px; }
         }
     </style>
 </head>
 <body>
+    <!-- LOADING OVERLAY -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-ring"><div></div><div></div><div></div><div></div></div>
+            <div class="loading-title">⏳ Sedang Memproses...</div>
+            <div class="loading-message">
+                Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan.<br>
+                Proses ini membutuhkan waktu <strong>1-2 menit</strong>.
+            </div>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            <div class="loading-warning">
+                <strong>️ JANGAN REFRESH HALAMAN!</strong>
+                <p>Harap tunggu hingga proses selesai. Refresh halaman akan membatalkan proses.</p>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
         <div class="header">
             <h1>Cek Redaman OLT & Aktivasi Pelanggan</h1>
             <p>RnBNET Network Management System</p>
         </div>
         
-        <div class="cards-wrapper">
-            <div class="card card-cek">
-                <div class="card-icon"></div>
-                <h2>Cek Redaman</h2>
-                <form id="formCek">
-                    <div class="form-group">
-                        <label>Pilih Server</label>
-                        <select id="serverCek" required><option value="">-- Pilih Server --</option></select>
+        <!-- TAB NAVIGATION -->
+        <div class="tab-nav">
+            <button class="tab-btn active" data-tab="0">🔍 Cek Redaman</button>
+            <button class="tab-btn" data-tab="1">⚡ Aktivasi</button>
+        </div>
+        
+        <!-- SLIDER -->
+        <div class="slider-container" id="sliderContainer">
+            <div class="slider-wrapper" id="sliderWrapper">
+                <!-- SLIDE 1: CEK REDAMAN -->
+                <div class="slide">
+                    <div class="card card-cek">
+                        <div class="card-header">
+                            <div class="card-icon">🔍</div>
+                            <h2>Cek Redaman OLT</h2>
+                        </div>
+                        <form id="formCek">
+                            <div class="form-group">
+                                <label>Pilih Server</label>
+                                <select id="serverCek" required><option value="">-- Pilih Server --</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Username Pelanggan</label>
+                                <input type="text" id="usernameCek" placeholder="Contoh: liacahyani" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="btnCek"><span>🔍 Cek Redaman</span></button>
+                        </form>
+                        <div id="resultCek" class="result"></div>
                     </div>
-                    <div class="form-group">
-                        <label>Username Pelanggan</label>
-                        <input type="text" id="usernameCek" placeholder="Contoh: liacahyani" required>
+                </div>
+                
+                <!-- SLIDE 2: AKTIVASI -->
+                <div class="slide">
+                    <div class="card card-aktivasi">
+                        <div class="card-header">
+                            <div class="card-icon"></div>
+                            <h2>Aktivasi Pelanggan Isolir</h2>
+                        </div>
+                        <form id="formAktivasi">
+                            <div class="form-group">
+                                <label>Pilih Server</label>
+                                <select id="serverAktivasi" required><option value="">-- Pilih Server --</option></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Username Pelanggan</label>
+                                <input type="text" id="usernameAktivasi" placeholder="Contoh: liacahyani" required>
+                            </div>
+                            <button type="submit" class="btn btn-secondary" id="btnAktivasi"><span>⚡ Aktivasi Sekarang</span></button>
+                        </form>
+                        <div id="resultAktivasi" class="result"></div>
                     </div>
-                    <button type="submit" class="btn btn-primary" id="btnCek"><span> Cek Redaman</span></button>
-                </form>
-                <div id="resultCek" class="result"></div>
+                </div>
             </div>
-            
-            <div class="card card-aktivasi">
-                <div class="card-icon">⚡</div>
-                <h2>Aktivasi Pelanggan Isolir</h2>
-                <form id="formAktivasi">
-                    <div class="form-group">
-                        <label>Pilih Server</label>
-                        <select id="serverAktivasi" required><option value="">-- Pilih Server --</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Username Pelanggan</label>
-                        <input type="text" id="usernameAktivasi" placeholder="Contoh: liacahyani" required>
-                    </div>
-                    <button type="submit" class="btn btn-secondary" id="btnAktivasi"><span>⚡ Aktivasi Sekarang</span></button>
-                </form>
-                <div id="resultAktivasi" class="result"></div>
-            </div>
+        </div>
+        
+        <div class="swipe-hint">
+            <span>👆</span> Geser kiri/kanan untuk berpindah tab
         </div>
     </div>
     
     <script>
+        // TAB & SLIDER LOGIC
+        let currentTab = 0;
+        const totalTabs = 2;
+        const sliderWrapper = document.getElementById('sliderWrapper');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        
+        function switchTab(index) {
+            currentTab = index;
+            sliderWrapper.style.transform = `translateX(-${index * 100}%)`;
+            tabBtns.forEach((btn, i) => {
+                btn.classList.toggle('active', i === index);
+            });
+        }
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                switchTab(parseInt(btn.dataset.tab));
+            });
+        });
+        
+        // SWIPE SUPPORT (Mobile)
+        let touchStartX = 0;
+        let touchEndX = 0;
+        const sliderContainer = document.getElementById('sliderContainer');
+        
+        sliderContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        sliderContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+        
+        function handleSwipe() {
+            const diff = touchStartX - touchEndX;
+            const threshold = 50;
+            if (Math.abs(diff) > threshold) {
+                if (diff > 0 && currentTab < totalTabs - 1) {
+                    switchTab(currentTab + 1); // Swipe kiri -> tab berikutnya
+                } else if (diff < 0 && currentTab > 0) {
+                    switchTab(currentTab - 1); // Swipe kanan -> tab sebelumnya
+                }
+            }
+        }
+        
+        // LOAD SERVERS
         async function loadServers() {
             try {
                 const res = await fetch('/api/servers');
@@ -149,15 +368,25 @@
             } catch (err) { console.error('Gagal load servers:', err); }
         }
         
+        function showLoading() { document.getElementById('loadingOverlay').classList.add('show'); }
+        function hideLoading() { document.getElementById('loadingOverlay').classList.remove('show'); }
+        
+        function parseOLTResult(oltText) {
+            const lines = oltText.split('\n').filter(line => line.trim());
+            const oltName = lines[0]?.replace(/[✅*]/g, '').trim() || 'OLT';
+            const redaman = lines[1]?.match(/Redaman:\s*\*?([^\*]*)\*?/)?.[1].trim() || 'N/A';
+            const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Unknown';
+            return { oltName, redaman, status };
+        }
+        
+        // FORM CEK REDAMAN
         document.getElementById('formCek').addEventListener('submit', async (e) => {
             e.preventDefault();
             const serverKey = document.getElementById('serverCek').value;
             const username = document.getElementById('usernameCek').value.trim();
-            const btn = document.getElementById('btnCek');
             const resultDiv = document.getElementById('resultCek');
             
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading"></div> <span>Memproses...</span>';
+            showLoading();
             resultDiv.classList.remove('show');
             
             try {
@@ -167,37 +396,42 @@
                     body: JSON.stringify({ serverKey, username })
                 });
                 const data = await res.json();
+                hideLoading();
                 
                 if (data.success) {
                     resultDiv.className = 'result show success';
+                    const olt = parseOLTResult(data.data.olt);
                     resultDiv.innerHTML = `
-                        <h3>📊 Hasil Cek Redaman OLT</h3>
+                        <h3> Hasil Cek Redaman OLT</h3>
                         <div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div>
                         <div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div>
                         <div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>
-                        <div class="olt-result"><h4>${data.data.olt}</h4></div>
+                        <div class="olt-result">
+                            <h4>📡 ${olt.oltName}</h4>
+                            <div class="olt-info">
+                                <div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div>
+                                <div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div>
+                            </div>
+                        </div>
                     `;
                 } else {
                     throw new Error(data.error || 'Gagal cek redaman');
                 }
             } catch (err) {
+                hideLoading();
                 resultDiv.className = 'result show error';
                 resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>🔍 Cek Redaman</span>';
             }
         });
         
+        // FORM AKTIVASI
         document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
             e.preventDefault();
             const serverKey = document.getElementById('serverAktivasi').value;
             const username = document.getElementById('usernameAktivasi').value.trim();
-            const btn = document.getElementById('btnAktivasi');
             const resultDiv = document.getElementById('resultAktivasi');
             
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading"></div> <span>Memproses...</span>';
+            showLoading();
             resultDiv.classList.remove('show');
             
             try {
@@ -207,6 +441,7 @@
                     body: JSON.stringify({ serverKey, username })
                 });
                 const data = await res.json();
+                hideLoading();
                 
                 if (data.success) {
                     resultDiv.className = 'result show success';
@@ -214,24 +449,31 @@
                         <h3>✨ Aktivasi Berhasil</h3>
                         <div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div>
                         <div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div>
-                        <div class="result-item"><span class="result-label">🛜 Paket:</span><span class="result-value">${data.data.paket}</span></div>
-                        <div class="result-item"><span class="result-label"> Server:</span><span class="result-value">${data.data.server}</span></div>
-                        <div class="result-item"><span class="result-label"> IP:</span><span class="result-value">${data.data.ip}</span></div>
-                        <div class="result-item"><span class="result-label"> MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>
+                        <div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div>
+                        <div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div>
+                        <div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div>
+                        <div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>
                     `;
                     if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') {
-                        html += `<div class="olt-result"><h4>${data.data.olt}</h4></div>`;
+                        const olt = parseOLTResult(data.data.olt);
+                        html += `
+                            <div class="olt-result">
+                                <h4>📡 ${olt.oltName}</h4>
+                                <div class="olt-info">
+                                    <div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div>
+                                    <div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div>
+                                </div>
+                            </div>
+                        `;
                     }
                     resultDiv.innerHTML = html;
                 } else {
                     throw new Error(data.error || 'Gagal aktivasi');
                 }
             } catch (err) {
+                hideLoading();
                 resultDiv.className = 'result show error';
                 resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`;
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>⚡ Aktivasi Sekarang</span>';
             }
         });
         
