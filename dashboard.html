@@ -303,230 +303,250 @@
     </div>
     
     <script>
-        // TAB & SLIDER
-        let currentTab = 0;
-        const sliderWrapper = document.getElementById('sliderWrapper');
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        function switchTab(index) { 
-            currentTab = index; 
-            sliderWrapper.style.transform = `translateX(-${index * 100}%)`; 
-            tabBtns.forEach((btn, i) => btn.classList.toggle('active', i === index)); 
-        }
-        tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(parseInt(btn.dataset.tab))));
-        
-        let touchStartX = 0, touchEndX = 0;
-        const sliderContainer = document.getElementById('sliderContainer');
-        sliderContainer.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-        sliderContainer.addEventListener('touchend', (e) => { 
-            touchEndX = e.changedTouches[0].screenX; 
-            const diff = touchStartX - touchEndX; 
-            if (Math.abs(diff) > 50) { 
-                if (diff > 0 && currentTab < 1) switchTab(currentTab + 1); 
-                else if (diff < 0 && currentTab > 0) switchTab(currentTab - 1); 
-            } 
-        }, { passive: true });
-        
-        // QUEUE STATUS
-        let queuePollingInterval;
-        async function updateQueueStatus() {
-            try {
-                const res = await fetch('/api/queue-status');
-                const data = await res.json();
-                const statusBar = document.getElementById('queueStatusBar');
-                const queueCount = document.getElementById('queueCount');
-                const queueLabel = document.getElementById('queueLabel');
-                const currentTask = document.getElementById('currentTask');
-                
-                if (data.isProcessing || data.queueLength > 0) {
-                    statusBar.classList.add('show');
-                    queueCount.textContent = data.queueLength;
-                    if (data.queueLength === 0) queueLabel.textContent = 'sedang diproses';
-                    else queueLabel.textContent = `menunggu (${data.queueLength} antrian)`;
-                    if (data.currentProcessing) currentTask.textContent = `🔄 ${data.currentProcessing.username} (${data.currentProcessing.server})`;
-                    else currentTask.textContent = '-';
-                } else {
-                    statusBar.classList.remove('show');
-                }
-            } catch (err) {}
-        }
-        
-        async function loadServers() {
-            try {
-                const res = await fetch('/api/servers');
-                const data = await res.json();
-                const selectCek = document.getElementById('serverCek');
-                const selectAktivasi = document.getElementById('serverAktivasi');
-                data.servers.forEach(server => { 
-                    selectCek.add(new Option(server.label, server.key)); 
-                    selectAktivasi.add(new Option(server.label, server.key)); 
-                });
-            } catch (err) {}
-        }
-        
-        function showLoading(isQueued = false, position = 0, estimatedWait = 0) {
-            const overlay = document.getElementById('loadingOverlay');
-            const title = document.getElementById('loadingTitle');
-            const message = document.getElementById('loadingMessage');
-            const queueInfoBox = document.getElementById('queueInfoBox');
-            const queuePosition = document.getElementById('queuePosition');
-            const queueWait = document.getElementById('queueWait');
-            const queueList = document.getElementById('queueList');
+    // TAB & SLIDER
+    let currentTab = 0;
+    const sliderWrapper = document.getElementById('sliderWrapper');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    function switchTab(index) { 
+        currentTab = index; 
+        sliderWrapper.style.transform = `translateX(-${index * 100}%)`; 
+        tabBtns.forEach((btn, i) => btn.classList.toggle('active', i === index)); 
+    }
+    tabBtns.forEach(btn => btn.addEventListener('click', () => switchTab(parseInt(btn.dataset.tab))));
+    
+    let touchStartX = 0, touchEndX = 0;
+    const sliderContainer = document.getElementById('sliderContainer');
+    sliderContainer.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+    sliderContainer.addEventListener('touchend', (e) => { 
+        touchEndX = e.changedTouches[0].screenX; 
+        const diff = touchStartX - touchEndX; 
+        if (Math.abs(diff) > 50) { 
+            if (diff > 0 && currentTab < 1) switchTab(currentTab + 1); 
+            else if (diff < 0 && currentTab > 0) switchTab(currentTab - 1); 
+        } 
+    }, { passive: true });
+    
+    // QUEUE STATUS
+    let queuePollingInterval;
+    async function updateQueueStatus() {
+        try {
+            const res = await fetch('/api/queue-status');
+            const data = await res.json();
+            const statusBar = document.getElementById('queueStatusBar');
+            const queueCount = document.getElementById('queueCount');
+            const queueLabel = document.getElementById('queueLabel');
+            const currentTask = document.getElementById('currentTask');
             
-            overlay.classList.add('show');
-            
-            if (isQueued) {
-                title.textContent = '⏳ Anda Dalam Antrian';
-                message.textContent = 'Teknisi lain sedang melakukan scan. Mohon tunggu giliran Anda.';
-                queueInfoBox.style.display = 'block';
-                queuePosition.textContent = `Antrian #${position}`;
-                const menit = Math.floor(estimatedWait / 60);
-                const detik = estimatedWait % 60;
-                queueWait.textContent = `Estimasi tunggu: ~${menit > 0 ? menit + ' menit ' : ''}${detik} detik`;
-                
-                fetch('/api/queue-status').then(r => r.json()).then(data => {
-                    if (data.waitingList && data.waitingList.length > 0) {
-                        queueList.innerHTML = '<strong>Daftar Antrian:</strong>' + 
-                            data.waitingList.map(item => `<div class="queue-list-item">#${item.position}: ${item.username} (${item.server})</div>`).join('');
-                    }
-                });
+            if (data.isProcessing || data.queueLength > 0) {
+                statusBar.classList.add('show');
+                queueCount.textContent = data.queueLength;
+                if (data.queueLength === 0) queueLabel.textContent = 'sedang diproses';
+                else queueLabel.textContent = `menunggu (${data.queueLength} antrian)`;
+                if (data.currentProcessing) currentTask.textContent = `🔄 ${data.currentProcessing.username} (${data.currentProcessing.server})`;
+                else currentTask.textContent = '-';
             } else {
-                title.textContent = '⏳ Sedang Memproses...';
-                message.textContent = 'Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan.';
-                queueInfoBox.style.display = 'none';
+                statusBar.classList.remove('show');
             }
-        }
+        } catch (err) {}
+    }
+    
+    async function loadServers() {
+        try {
+            const res = await fetch('/api/servers');
+            const data = await res.json();
+            const selectCek = document.getElementById('serverCek');
+            const selectAktivasi = document.getElementById('serverAktivasi');
+            data.servers.forEach(server => { 
+                selectCek.add(new Option(server.label, server.key)); 
+                selectAktivasi.add(new Option(server.label, server.key)); 
+            });
+        } catch (err) {}
+    }
+    
+    function showLoading(isQueued = false, position = 0, estimatedWait = 0) {
+        const overlay = document.getElementById('loadingOverlay');
+        const title = document.getElementById('loadingTitle');
+        const message = document.getElementById('loadingMessage');
+        const queueInfoBox = document.getElementById('queueInfoBox');
+        const queuePosition = document.getElementById('queuePosition');
+        const queueWait = document.getElementById('queueWait');
+        const queueList = document.getElementById('queueList');
         
-        function hideLoading() { 
-            document.getElementById('loadingOverlay').classList.remove('show'); 
-            if (queuePollingInterval) { 
-                clearInterval(queuePollingInterval); 
-                queuePollingInterval = null; 
-            } 
-        }
+        overlay.classList.add('show');
         
-        function parseOLTResult(oltText) {
-            const lines = oltText.split('\n').filter(line => line.trim());
-            const oltName = lines[0]?.replace(/[✅*]/g, '').trim() || 'OLT';
-            const redaman = lines[1]?.match(/Redaman:\s*\*?([^\*]*)\*?/)?.[1].trim() || 'N/A';
-            const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Unknown';
-            return { oltName, redaman, status };
-        }
-        
-        // FORM CEK REDAMAN
-        document.getElementById('formCek').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const serverKey = document.getElementById('serverCek').value;
-            const username = document.getElementById('usernameCek').value.trim();
-            const resultDiv = document.getElementById('resultCek');
-            const btn = document.getElementById('btnCek');
-            btn.disabled = true; 
-            resultDiv.classList.remove('show');
-            showLoading(false);
+        if (isQueued) {
+            title.textContent = '⏳ Anda Dalam Antrian';
+            message.textContent = 'Teknisi lain sedang melakukan scan. Mohon tunggu giliran Anda.';
+            queueInfoBox.style.display = 'block';
+            queuePosition.textContent = `Antrian #${position}`;
+            const menit = Math.floor(estimatedWait / 60);
+            const detik = estimatedWait % 60;
+            queueWait.textContent = `Estimasi tunggu: ~${menit > 0 ? menit + ' menit ' : ''}${detik} detik`;
             
+            fetch('/api/queue-status').then(r => r.json()).then(data => {
+                if (data.waitingList && data.waitingList.length > 0) {
+                    queueList.innerHTML = '<strong>Daftar Antrian:</strong>' + 
+                        data.waitingList.map(item => `<div class="queue-list-item">#${item.position}: ${item.username} (${item.server})</div>`).join('');
+                }
+            });
+        } else {
+            title.textContent = '⏳ Sedang Memproses...';
+            message.textContent = 'Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan.';
+            queueInfoBox.style.display = 'none';
+        }
+    }
+    
+    function hideLoading() { 
+        document.getElementById('loadingOverlay').classList.remove('show'); 
+        if (queuePollingInterval) { 
+            clearInterval(queuePollingInterval); 
+            queuePollingInterval = null; 
+        } 
+    }
+    
+    function parseOLTResult(oltText) {
+        const lines = oltText.split('\n').filter(line => line.trim());
+        const oltName = lines[0]?.replace(/[✅*]/g, '').trim() || 'OLT';
+        const redaman = lines[1]?.match(/Redaman:\s*\*?([^\*]*)\*?/)?.[1].trim() || 'N/A';
+        const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Unknown';
+        return { oltName, redaman, status };
+    }
+    
+    // POLLING HASIL ANTRIAN - INI YANG BARU!
+    async function pollForResult(queueId, resultDiv, btn, isAktivasi = false) {
+        queuePollingInterval = setInterval(async () => {
             try {
-                const res = await fetch('/api/cek-redaman', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ serverKey, username }) 
-                });
+                const res = await fetch(`/api/queue-result/${queueId}`);
                 const data = await res.json();
                 
-                if (data.queued) {
-                    showLoading(true, data.position, data.estimatedWait);
-                    queuePollingInterval = setInterval(async () => { 
-                        await updateQueueStatus(); 
-                        const checkRes = await fetch('/api/queue-status'); 
-                        const checkData = await checkRes.json(); 
-                        if (!checkData.isProcessing && checkData.queueLength === 0) { 
-                            hideLoading(); 
-                            btn.disabled = false; 
-                            resultDiv.className = 'result show success';
-                            resultDiv.innerHTML = `<h3>✅ Antrian Selesai</h3><p>Proses scan telah selesai. Silakan klik tombol "Cek Redaman" sekali lagi untuk melihat hasil.</p>`;
-                            clearInterval(queuePollingInterval); 
-                            queuePollingInterval = null;
-                        } 
-                    }, 3000);
-                    return;
-                }
-                
-                hideLoading();
-                if (data.success) {
+                if (data.status === 'done') {
+                    // HASIL SUDAH TERSEDIA!
+                    clearInterval(queuePollingInterval);
+                    queuePollingInterval = null;
+                    hideLoading();
+                    btn.disabled = false;
+                    
                     resultDiv.className = 'result show success';
-                    const olt = parseOLTResult(data.data.olt);
-                    resultDiv.innerHTML = `<h3>📊 Hasil Cek Redaman OLT</h3><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div><div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`;
-                } else { 
-                    throw new Error(data.error || 'Gagal cek redaman'); 
-                }
-            } catch (err) { 
-                hideLoading(); 
-                resultDiv.className = 'result show error'; 
-                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`; 
-            } finally { 
-                if (!queuePollingInterval) btn.disabled = false; 
-            }
-        });
-        
-        // FORM AKTIVASI
-        document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const serverKey = document.getElementById('serverAktivasi').value;
-            const username = document.getElementById('usernameAktivasi').value.trim();
-            const resultDiv = document.getElementById('resultAktivasi');
-            const btn = document.getElementById('btnAktivasi');
-            btn.disabled = true; 
-            resultDiv.classList.remove('show');
-            showLoading(false);
-            
-            try {
-                const res = await fetch('/api/aktivasi', { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ serverKey, username }) 
-                });
-                const data = await res.json();
-                
-                if (data.queued) {
-                    showLoading(true, data.position, data.estimatedWait);
-                    queuePollingInterval = setInterval(async () => { 
-                        await updateQueueStatus(); 
-                        const checkRes = await fetch('/api/queue-status'); 
-                        const checkData = await checkRes.json(); 
-                        if (!checkData.isProcessing && checkData.queueLength === 0) { 
-                            hideLoading(); 
-                            btn.disabled = false; 
-                            resultDiv.className = 'result show success';
-                            resultDiv.innerHTML = `<h3>✅ Antrian Selesai</h3><p>Proses aktivasi telah selesai. Silakan klik tombol "Aktivasi" sekali lagi untuk melihat hasil.</p>`;
-                            clearInterval(queuePollingInterval); 
-                            queuePollingInterval = null;
-                        } 
-                    }, 3000);
-                    return;
-                }
-                
-                hideLoading();
-                if (data.success) {
-                    resultDiv.className = 'result show success';
-                    let html = `<h3>✨ Aktivasi Berhasil</h3><div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div><div class="result-item"><span class="result-label"> Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>`;
-                    if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') { 
-                        const olt = parseOLTResult(data.data.olt); 
-                        html += `<div class="olt-result"><h4> ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`; 
+                    
+                    if (isAktivasi) {
+                        let html = `<h3>✨ Aktivasi Berhasil</h3><div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>`;
+                        if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') { 
+                            const olt = parseOLTResult(data.data.olt); 
+                            html += `<div class="olt-result"><h4> ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`; 
+                        }
+                        resultDiv.innerHTML = html;
+                    } else {
+                        const olt = parseOLTResult(data.data.olt);
+                        resultDiv.innerHTML = `<h3>📊 Hasil Cek Redaman OLT</h3><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div><div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`;
                     }
-                    resultDiv.innerHTML = html;
-                } else { 
-                    throw new Error(data.error || 'Gagal aktivasi'); 
+                } else if (data.status === 'error') {
+                    clearInterval(queuePollingInterval);
+                    queuePollingInterval = null;
+                    hideLoading();
+                    btn.disabled = false;
+                    resultDiv.className = 'result show error';
+                    resultDiv.innerHTML = `<h3>❌ Error</h3><p>${data.error}</p>`;
                 }
-            } catch (err) { 
-                hideLoading(); 
-                resultDiv.className = 'result show error'; 
-                resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`; 
-            } finally { 
-                if (!queuePollingInterval) btn.disabled = false; 
+                // Jika masih 'pending', lanjut polling
+            } catch (err) {
+                console.error('Polling error:', err);
             }
-        });
+        }, 2000); // Polling setiap 2 detik
+    }
+    
+    // FORM CEK REDAMAN
+    document.getElementById('formCek').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const serverKey = document.getElementById('serverCek').value;
+        const username = document.getElementById('usernameCek').value.trim();
+        const resultDiv = document.getElementById('resultCek');
+        const btn = document.getElementById('btnCek');
+        btn.disabled = true; 
+        resultDiv.classList.remove('show');
+        showLoading(false);
         
-        updateQueueStatus();
-        setInterval(updateQueueStatus, 3000);
-        loadServers();
-    </script>
-</body>
-</html>
+        try {
+            const res = await fetch('/api/cek-redaman', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ serverKey, username }) 
+            });
+            const data = await res.json();
+            
+            if (data.queued) {
+                // MASUK ANTRIAN - tampilkan info antrian
+                showLoading(true, data.position, data.estimatedWait);
+                
+                // POLLING OTOMATIS sampai hasil tersedia!
+                pollForResult(data.queueId, resultDiv, btn, false);
+                return;
+            }
+            
+            // LANGSUNG DAPAT HASIL
+            hideLoading();
+            if (data.success) {
+                resultDiv.className = 'result show success';
+                const olt = parseOLTResult(data.data.olt);
+                resultDiv.innerHTML = `<h3>📊 Hasil Cek Redaman OLT</h3><div class="result-item"><span class="result-label"> Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">💻 Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div><div class="olt-result"><h4>📡 ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label"> Status:</span><span class="result-value">${olt.status}</span></div></div></div>`;
+            } else { 
+                throw new Error(data.error || 'Gagal cek redaman'); 
+            }
+        } catch (err) { 
+            hideLoading(); 
+            resultDiv.className = 'result show error'; 
+            resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`; 
+        } finally { 
+            if (!queuePollingInterval) btn.disabled = false; 
+        }
+    });
+    
+    // FORM AKTIVASI
+    document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const serverKey = document.getElementById('serverAktivasi').value;
+        const username = document.getElementById('usernameAktivasi').value.trim();
+        const resultDiv = document.getElementById('resultAktivasi');
+        const btn = document.getElementById('btnAktivasi');
+        btn.disabled = true; 
+        resultDiv.classList.remove('show');
+        showLoading(false);
+        
+        try {
+            const res = await fetch('/api/aktivasi', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ serverKey, username }) 
+            });
+            const data = await res.json();
+            
+            if (data.queued) {
+                showLoading(true, data.position, data.estimatedWait);
+                pollForResult(data.queueId, resultDiv, btn, true);
+                return;
+            }
+            
+            hideLoading();
+            if (data.success) {
+                resultDiv.className = 'result show success';
+                let html = `<h3>✨ Aktivasi Berhasil</h3><div class="result-item"><span class="result-label">✅ Status:</span><span class="result-value"><strong>${data.data.status}</strong></span></div><div class="result-item"><span class="result-label">👤 Pelanggan:</span><span class="result-value">${data.data.username}</span></div><div class="result-item"><span class="result-label">📦 Paket:</span><span class="result-value">${data.data.paket}</span></div><div class="result-item"><span class="result-label"> Server:</span><span class="result-value">${data.data.server}</span></div><div class="result-item"><span class="result-label">🌐 IP:</span><span class="result-value">${data.data.ip}</span></div><div class="result-item"><span class="result-label">🔒 MAC:</span><span class="result-value"><code>${data.data.mac}</code></span></div>`;
+                if (data.data.olt && data.data.olt !== 'ONU tidak ditemukan di OLT manapun') { 
+                    const olt = parseOLTResult(data.data.olt); 
+                    html += `<div class="olt-result"><h4> ${olt.oltName}</h4><div class="olt-info"><div class="olt-item"><span class="olt-label">📉 Redaman:</span><span class="olt-value"><strong>${olt.redaman}</strong></span></div><div class="olt-item"><span class="olt-label">📡 Status:</span><span class="olt-value">${olt.status}</span></div></div></div>`; 
+                }
+                resultDiv.innerHTML = html;
+            } else { 
+                throw new Error(data.error || 'Gagal aktivasi'); 
+            }
+        } catch (err) { 
+            hideLoading(); 
+            resultDiv.className = 'result show error'; 
+            resultDiv.innerHTML = `<h3>❌ Error</h3><p>${err.message}</p>`; 
+        } finally { 
+            if (!queuePollingInterval) btn.disabled = false; 
+        }
+    });
+    
+    updateQueueStatus();
+    setInterval(updateQueueStatus, 3000);
+    loadServers();
+</script>
