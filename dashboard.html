@@ -608,8 +608,8 @@
                 document.getElementById('queueWait').textContent = `Estimasi: ~${m>0?m+'m ':''}${s}s`;
                 showDynamicIsland(`Antrian #${position}`);
             } else {
-                title.textContent = 'Memproses...';
-                msg.textContent = 'Scanning OLT System';
+                title.textContent = '⏳ Sedang Memproses...';
+                msg.textContent = 'Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan';
                 qBox.style.display = 'none';
                 showDynamicIsland('Scanning...');
             }
