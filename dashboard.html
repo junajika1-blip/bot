@@ -745,21 +745,24 @@
                 
                 hideLoading();
                 if (data.success) {
+                    // LANGSUNG TAMPILKAN HASIL TANPA POPUP
                     resultDiv.innerHTML = buildGridResult(data.data, isAktivasi);
                     resultDiv.classList.add('show');
-                    showModal('success', 'Berhasil', isAktivasi ? 'Aktivasi sukses.' : 'Scan OLT selesai.');
+                    
+                    // Trigger getaran halus ala iPhone (jika didukung HP)
+                    if(navigator.vibrate) navigator.vibrate([20, 50, 20]); 
                 } else {
                     throw new Error(data.error || `Gagal ${isAktivasi ? 'aktivasi' : 'cek redaman'}`);
                 }
             } catch (err) {
                 hideLoading();
-                showModal('error', 'Terjadi Kesalahan', err.message);
+                showModal('error', 'Terjadi Kesalahan', err.message); // Popup error tetap muncul
             } finally {
                 if (!queuePollingInterval) btn.disabled = false;
             }
         }
 
-        // Polling
+        // Polling (Untuk Antrian)
         async function pollForResult(queueId, resultDiv, btn, isAktivasi) {
             queuePollingInterval = setInterval(async () => {
                 try {
@@ -769,14 +772,17 @@
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
                         hideLoading(); btn.disabled = false;
                         
+                        // LANGSUNG TAMPILKAN HASIL TANPA POPUP
                         resultDiv.innerHTML = buildGridResult(data.data, isAktivasi);
                         resultDiv.classList.add('show');
-                        showModal('success', 'Berhasil', 'Proses antrian selesai.');
+                        
+                        // Trigger getaran halus ala iPhone
+                        if(navigator.vibrate) navigator.vibrate([20, 50, 20]);
                         
                     } else if (data.status === 'error') {
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
                         hideLoading(); btn.disabled = false;
-                        showModal('error', 'Gagal', data.error);
+                        showModal('error', 'Gagal', data.error); // Popup error tetap muncul
                     }
                 } catch (err) { console.error('Polling error:', err); }
             }, 2000);
