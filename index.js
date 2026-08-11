@@ -1,4 +1,4 @@
-// index.js - RnBNET WEB DASHBOARD (Aktivasi Fixed dengan Verifikasi)
+// index.js - RnBNET WEB DASHBOARD (Aktivasi Fixed dengan Native Enable Command)
 const path = require('path');
 const express = require('express');
 const RouterOSAPI = require('node-routeros').RouterOSAPI;
@@ -169,7 +169,7 @@ app.post('/api/cek-redaman', async (req, res) => {
     res.json(result);
 });
 
-// API: Aktivasi (DIPERBAIKI: Ada Verifikasi Disabled/Enabled)
+// API: Aktivasi (DIPERBAIKI: Menggunakan /ppp/secret/enable)
 app.post('/api/aktivasi', async (req, res) => {
     const { serverKey, username } = req.body;
     if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
@@ -188,8 +188,9 @@ app.post('/api/aktivasi', async (req, res) => {
         if (userObj.disabled === 'true') {
             console.log(`⚠️ User ${username} sedang disabled, mencoba mengaktifkan...`);
             
-            // Kirim command enable
-            await api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']);
+            // ✅ FIX: Gunakan command native 'enable' (Jauh lebih stabil daripada set disabled=no)
+            const enableReply = await api.write(['/ppp/secret/enable', `=.id=${userObj['.id']}`]);
+            console.log(` Reply dari command enable:`, enableReply);
             
             // Tunggu MikroTik memproses
             await new Promise(r => setTimeout(r, 2000));
@@ -197,7 +198,7 @@ app.post('/api/aktivasi', async (req, res) => {
             // 3. VERIFIKASI: Cek ulang apakah sudah benar-benar enabled
             const verifyUser = await getUserFromMikrotik(api, username);
             if (verifyUser.disabled === 'true') {
-                throw new Error(`Gagal mengaktifkan user ${username}. Secret masih disabled di MikroTik Sukamelang.`);
+                throw new Error(`Gagal mengaktifkan user ${username}. Secret masih disabled di MikroTik. (Cek permission write user API 'berry')`);
             }
             console.log(`✅ User ${username} berhasil diaktifkan (verified).`);
         } else {
@@ -232,4 +233,4 @@ app.post('/api/aktivasi', async (req, res) => {
 });
 
 process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
-process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error('❌ UNCAUGHT:', err); });
+process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error(' UNCAUGHT:', err); });
