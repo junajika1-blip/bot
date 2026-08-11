@@ -1,4 +1,4 @@
-// index.js - RnBNET WEB DASHBOARD (Aktivasi Fixed dengan Native Enable Command)
+// index.js - RnBNET WEB DASHBOARD (Aktivasi Double Force Enable)
 const path = require('path');
 const express = require('express');
 const RouterOSAPI = require('node-routeros').RouterOSAPI;
@@ -169,7 +169,7 @@ app.post('/api/cek-redaman', async (req, res) => {
     res.json(result);
 });
 
-// API: Aktivasi (DIPERBAIKI: Menggunakan /ppp/secret/enable)
+// API: Aktivasi (DOUBLE FORCE ENABLE)
 app.post('/api/aktivasi', async (req, res) => {
     const { serverKey, username } = req.body;
     if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
@@ -181,28 +181,34 @@ app.post('/api/aktivasi', async (req, res) => {
         
         // 1. Ambil data user
         const userObj = await getUserFromMikrotik(api, username);
+        console.log(` Status awal ${username}: disabled = ${userObj.disabled} | .id = ${userObj['.id']}`);
         
-        // 2. Cek status disabled/enabled
-        console.log(` Status awal ${username}: disabled = ${userObj.disabled}`);
-        
+        // 2. DOUBLE FORCE ENABLE (Menghapus tanda 'D' di Secrets)
         if (userObj.disabled === 'true') {
-            console.log(`⚠️ User ${username} sedang disabled, mencoba mengaktifkan...`);
+            console.log(`⚠️ User ${username} sedang disabled. Melakukan Double Force Enable...`);
             
-            // ✅ FIX: Gunakan command native 'enable' (Jauh lebih stabil daripada set disabled=no)
-            const enableReply = await api.write(['/ppp/secret/enable', `=.id=${userObj['.id']}`]);
-            console.log(` Reply dari command enable:`, enableReply);
+            // Perintah 1: Native Enable
+            await api.write(['/ppp/secret/enable', `=.id=${userObj['.id']}`]);
+            console.log(`   [1/2] Command /ppp/secret/enable terkirim.`);
             
-            // Tunggu MikroTik memproses
-            await new Promise(r => setTimeout(r, 2000));
+            // Tunggu jeda
+            await new Promise(r => setTimeout(r, 1000));
             
-            // 3. VERIFIKASI: Cek ulang apakah sudah benar-benar enabled
+            // Perintah 2: Set disabled=no (Backup)
+            await api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']);
+            console.log(`   [2/2] Command /ppp/secret/set disabled=no terkirim.`);
+            
+            // Tunggu MikroTik menyimpan ke memori
+            await new Promise(r => setTimeout(r, 3000));
+            
+            // 3. VERIFIKASI AKHIR
             const verifyUser = await getUserFromMikrotik(api, username);
             if (verifyUser.disabled === 'true') {
-                throw new Error(`Gagal mengaktifkan user ${username}. Secret masih disabled di MikroTik. (Cek permission write user API 'berry')`);
+                throw new Error(`GAGAL! User ${username} masih disabled di Secret. Cek permission user API 'berry' (harus punya hak write/ppp).`);
             }
-            console.log(`✅ User ${username} berhasil diaktifkan (verified).`);
+            console.log(`✅ VERIFIKASI SUKSES: User ${username} sekarang ENABLED di Secret.`);
         } else {
-            console.log(`ℹ️ User ${username} sudah dalam keadaan enabled.`);
+            console.log(`ℹ️ User ${username} sudah ENABLED di Secret.`);
         }
 
         // 4. Lanjutkan proses aktivasi (ambil IP, MAC, Paket)
@@ -233,4 +239,4 @@ app.post('/api/aktivasi', async (req, res) => {
 });
 
 process.on('unhandledRejection', err => console.error('❌ UNHANDLED:', err));
-process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error(' UNCAUGHT:', err); });
+process.on('uncaughtException', err => { if (err.name === 'RosException' && err.message.includes('Timed out')) return; console.error('❌ UNCAUGHT:', err); });
