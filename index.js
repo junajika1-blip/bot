@@ -1,4 +1,4 @@
-// index.js - RnBNET WEB DASHBOARD (Queue System dengan Auto-Result)
+// index.js - RnBNET WEB DASHBOARD (Aktivasi Fixed dengan Verifikasi)
 const path = require('path');
 const express = require('express');
 const RouterOSAPI = require('node-routeros').RouterOSAPI;
@@ -65,42 +65,26 @@ async function safeCloseMikrotik(api) {
 }
 
 // ==========================================
-// QUEUE SYSTEM DENGAN AUTO-RESULT
+// QUEUE SYSTEM
 // ==========================================
 const requestQueue = [];
 let isProcessingQueue = false;
 let currentTask = null;
-const queueResults = new Map(); // Simpan hasil scan berdasarkan queueId
+const queueResults = new Map();
 
 async function enqueueTask(taskFn, username, serverLabel) {
     const queueId = Date.now() + Math.random().toString(36).substr(2, 9);
     
     if (isProcessingQueue) {
-        // Masuk antrian
         const position = requestQueue.length + 1;
-        requestQueue.push({
-            execute: taskFn,
-            username, 
-            server: serverLabel,
-            queueId
-        });
-        console.log(`📋 [ANTRIAN] ${username} (${serverLabel}) masuk antrian posisi #${position} [ID: ${queueId}]`);
-        
-        // Simpan status "pending" di results
+        requestQueue.push({ execute: taskFn, username, server: serverLabel, queueId });
+        console.log(`📋 [ANTRIAN] ${username} (${serverLabel}) masuk antrian posisi #${position}`);
         queueResults.set(queueId, { status: 'pending', position });
-        
-        return { 
-            queued: true, 
-            position, 
-            queueId,
-            estimatedWait: position * 90 
-        };
+        return { queued: true, position, queueId, estimatedWait: position * 90 };
     } else {
-        // Proses langsung
         isProcessingQueue = true;
         currentTask = { username, server: serverLabel };
         console.log(`▶️ [PROSES] ${username} (${serverLabel}) sedang diproses`);
-        
         try {
             const result = await taskFn();
             queueResults.set(queueId, { status: 'done', data: result });
@@ -119,15 +103,12 @@ async function processNextInQueue() {
     if (requestQueue.length > 0) {
         const next = requestQueue.shift();
         currentTask = { username: next.username, server: next.server };
-        console.log(`▶️ [PROSES] ${next.username} (${next.server}) dari antrian #1 [ID: ${next.queueId}]`);
-        
+        console.log(`▶️ [PROSES] ${next.username} (${next.server}) dari antrian #1`);
         try {
             const result = await next.execute();
             queueResults.set(next.queueId, { status: 'done', data: result });
-            console.log(`✅ [SELESAI] ${next.username} - hasil disimpan [ID: ${next.queueId}]`);
         } catch (err) {
             queueResults.set(next.queueId, { status: 'error', error: err.message });
-            console.error(` [GAGAL] ${next.username}: ${err.message}`);
         } finally {
             currentTask = null;
             processNextInQueue();
@@ -150,49 +131,18 @@ app.get('/api/queue-status', (req, res) => {
         queueLength: requestQueue.length,
         isProcessing: isProcessingQueue,
         currentProcessing: currentTask,
-        waitingList: requestQueue.map((item, index) => ({
-            position: index + 1,
-            username: item.username,
-            server: item.server,
-            queueId: item.queueId
-        }))
+        waitingList: requestQueue.map((item, index) => ({ position: index + 1, username: item.username, server: item.server }))
     });
 });
 
-// API: Cek Hasil Scan berdasarkan Queue ID
+// API: Cek Hasil Scan
 app.get('/api/queue-result/:queueId', (req, res) => {
     const { queueId } = req.params;
     const result = queueResults.get(queueId);
-    
-    if (!result) {
-        return res.json({ status: 'not_found' });
-    }
-    
-    if (result.status === 'pending') {
-        return res.json({ 
-            status: 'pending', 
-            position: result.position 
-        });
-    }
-    
-    if (result.status === 'done') {
-        // Hapus dari Map setelah diambil (cleanup)
-        queueResults.delete(queueId);
-        return res.json({ 
-            status: 'done', 
-            success: true, 
-            data: result.data 
-        });
-    }
-    
-    if (result.status === 'error') {
-        queueResults.delete(queueId);
-        return res.json({ 
-            status: 'error', 
-            success: false, 
-            error: result.error 
-        });
-    }
+    if (!result) return res.json({ status: 'not_found' });
+    if (result.status === 'pending') return res.json({ status: 'pending', position: result.position });
+    if (result.status === 'done') { queueResults.delete(queueId); return res.json({ status: 'done', success: true, data: result.data }); }
+    if (result.status === 'error') { queueResults.delete(queueId); return res.json({ status: 'error', success: false, error: result.error }); }
 });
 
 // API: Cek Redaman
@@ -219,7 +169,7 @@ app.post('/api/cek-redaman', async (req, res) => {
     res.json(result);
 });
 
-// API: Aktivasi
+// API: Aktivasi (DIPERBAIKI: Ada Verifikasi Disabled/Enabled)
 app.post('/api/aktivasi', async (req, res) => {
     const { serverKey, username } = req.body;
     if (!serverKey || !username) return res.status(400).json({ error: 'Server dan username wajib diisi' });
@@ -228,17 +178,48 @@ app.post('/api/aktivasi', async (req, res) => {
     const result = await enqueueTask(async () => {
         const { api: mikrotikApi, targetServer } = await connectMikrotik(serverKey);
         api = mikrotikApi;
+        
+        // 1. Ambil data user
         const userObj = await getUserFromMikrotik(api, username);
-        await withTimeout(api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']), 15000, 'Timeout set disabled=no');
-        await new Promise(r => setTimeout(r, 2000));
+        
+        // 2. Cek status disabled/enabled
+        console.log(` Status awal ${username}: disabled = ${userObj.disabled}`);
+        
+        if (userObj.disabled === 'true') {
+            console.log(`⚠️ User ${username} sedang disabled, mencoba mengaktifkan...`);
+            
+            // Kirim command enable
+            await api.write(['/ppp/secret/set', `=.id=${userObj['.id']}`, '=disabled=no']);
+            
+            // Tunggu MikroTik memproses
+            await new Promise(r => setTimeout(r, 2000));
+            
+            // 3. VERIFIKASI: Cek ulang apakah sudah benar-benar enabled
+            const verifyUser = await getUserFromMikrotik(api, username);
+            if (verifyUser.disabled === 'true') {
+                throw new Error(`Gagal mengaktifkan user ${username}. Secret masih disabled di MikroTik Sukamelang.`);
+            }
+            console.log(`✅ User ${username} berhasil diaktifkan (verified).`);
+        } else {
+            console.log(`ℹ️ User ${username} sudah dalam keadaan enabled.`);
+        }
+
+        // 4. Lanjutkan proses aktivasi (ambil IP, MAC, Paket)
         const activeUser = await getActiveUserFromMikrotik(api, username);
         let ip = userObj['remote-address'] || 'Dynamic';
         let rawMac = userObj['caller-id'] || 'Any';
         const paket = userObj.profile || 'default';
-        if (activeUser) { ip = activeUser.address || ip; rawMac = activeUser['caller-id'] || rawMac; }
+        
+        if (activeUser) { 
+            ip = activeUser.address || ip; 
+            rawMac = activeUser['caller-id'] || rawMac; 
+        }
+        
         const response = { username, server: targetServer.label, paket, ip, mac: rawMac, status: 'BERHASIL', olt: null };
+        
         if (rawMac && rawMac !== 'Any') {
-            const mac = rawMac.trim().toLowerCase(); response.mac = mac;
+            const mac = rawMac.trim().toLowerCase(); 
+            response.mac = mac;
             let oltText = 'ONU tidak ditemukan di OLT manapun';
             await scanSemuaOlt(targetServer.olts, mac, async (teksHasil) => { oltText = teksHasil; });
             response.olt = oltText;
