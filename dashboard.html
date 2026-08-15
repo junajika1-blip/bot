@@ -29,35 +29,32 @@
         body { background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 15px; }
         .container { max-width: 600px; margin: 0 auto; }
 
-        /* HEADER ANIMASI BERJALAN */
+        /* HEADER EFEK NGETIK (TYPEWRITER) */
         .header { 
             padding-bottom: 15px; 
             border-bottom: 1px solid var(--border-color); 
             margin-bottom: 20px; 
-            overflow: hidden;
             display: flex;
             align-items: center;
+            min-height: 45px;
         }
         
-        .marquee-container {
-            width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            position: relative;
-        }
-
-        .marquee-text {
-            display: inline-block;
+        .typewriter-text {
             font-size: 16px;
             font-weight: 600;
             color: var(--accent-blue);
-            animation: scrollMarquee 12s linear infinite;
+            font-family: 'Fira Code', monospace; /* Pake font kode ngarah ngetikna rapih */
         }
 
-        @keyframes scrollMarquee {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
+        .cursor {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--accent-blue);
+            animation: blink 0.8s step-end infinite;
+            margin-left: 2px;
         }
+
+        @keyframes blink { 50% { opacity: 0; } }
 
         /* TABS */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -128,7 +125,6 @@
             display: inline-block; width: 6px; height: 12px; background: #ffffff;
             margin-left: 5px; vertical-align: middle; animation: blink 1s step-end infinite;
         }
-        @keyframes blink { 50% { opacity: 0; } }
 
         .log-queue { color: #d29922; font-weight: 600; }
 
@@ -152,10 +148,10 @@
 <body>
 
     <div class="container">
-        <!-- HEADER -->
+        <!-- HEADER TYPEWRITER -->
         <div class="header">
-            <div class="marquee-container">
-                <div class="marquee-text">Parios Redaman & Aktivasi Isolir</div>
+            <div>
+                <span id="typewriterText" class="typewriter-text"></span><span class="cursor">_</span>
             </div>
         </div>
 
@@ -223,7 +219,29 @@
     </div>
 
     <script>
-        // 1. TABS
+        // 1. ANIMASI HEADER TYPEWRITER (Ngetik)
+        const textToType = "Parios Redaman & Aktivasi Isolir";
+        const typeTarget = document.getElementById("typewriterText");
+        let typeIndex = 0;
+
+        function typeWriter() {
+            if (typeIndex < textToType.length) {
+                typeTarget.innerHTML += textToType.charAt(typeIndex);
+                typeIndex++;
+                setTimeout(typeWriter, 100); // Kacepetan ngetik (100ms per huruf)
+            } else {
+                // Sanggeus rengse ngetik, usap deui sanggeus 8 detik tuluy ngulang (opsional)
+                setTimeout(() => {
+                    typeTarget.innerHTML = '';
+                    typeIndex = 0;
+                    typeWriter();
+                }, 8000); 
+            }
+        }
+        // Ngamimitian animasi ngetik sanggeus 0.5 detik halaman dimuat
+        setTimeout(typeWriter, 500);
+
+        // 2. TABS
         const tabBtns = document.querySelectorAll('.tab-btn');
         const panels = document.querySelectorAll('.panel');
         tabBtns.forEach(btn => {
@@ -236,7 +254,7 @@
             });
         });
 
-        // 2. LOAD SERVERS
+        // 3. LOAD SERVERS
         async function loadServers() {
             try {
                 const res = await fetch('/api/servers');
@@ -250,7 +268,7 @@
             } catch (err) {}
         }
 
-        // 3. FUNGSI TERMINAL LOG ANIMATION (Basa Sunda)
+        // 4. FUNGSI TERMINAL LOG ANIMATION (Basa Sunda)
         let logIntervals = {};
         
         const dummyLogsCek = [
@@ -282,7 +300,6 @@
             const logsArray = isAktivasi ? dummyLogsAkt : dummyLogsCek;
             let step = 0;
 
-            // Generate initial line
             printLogLine(logBox, "> Nyambungkeun kana sistem aman...");
 
             logIntervals[target] = setInterval(() => {
@@ -321,7 +338,7 @@
             document.getElementById(`scanner${target}`).classList.remove('show');
         }
 
-        // 4. OLT PARSER & BUILDER (Basa Sunda)
+        // 5. OLT PARSER & BUILDER (Basa Sunda)
         function parseOLTResult(oltText) {
             if(!oltText) return { oltName: 'Teu Kanyahoan', redaman: 'N/A', status: 'Teu Kanyahoan' };
             const lines = oltText.split('\n').filter(line => line.trim());
@@ -333,8 +350,8 @@
 
         function buildDashboardResult(data, isAktivasi) {
             let html = '';
-            if(isAktivasi) html += `<div class="status-banner status-success">Rengse ✓ [Aktivasi Sukses]</div>`;
-            else html += `<div class="status-banner status-success">Rengse ✓</div>`;
+            // Robah jadi Rengse ✓
+            html += `<div class="status-banner status-success">Rengse ✓</div>`;
 
             html += `<div class="data-grid">`;
             html += `<div class="data-item"><div class="data-label">USERNAME</div><div class="data-value">${data.username || '-'}</div></div>`;
@@ -361,7 +378,7 @@
             targetDiv.classList.add('show');
         }
 
-        // 5. CORE PROCESS
+        // 6. CORE PROCESS
         let queuePollingInterval;
 
         async function processScan(action, serverKey, username) {
@@ -410,7 +427,7 @@
             }
         }
 
-        // 6. POLLING
+        // 7. POLLING
         async function pollForResult(queueId, targetName, resultDiv, isAktivasi, btn) {
             queuePollingInterval = setInterval(async () => {
                 try {
@@ -438,7 +455,7 @@
             }, 2000);
         }
 
-        // 7. TRIGGERS
+        // 8. TRIGGERS
         document.getElementById('formCek').addEventListener('submit', async (e) => {
             e.preventDefault();
             await processScan('cek', document.getElementById('serverCek').value, document.getElementById('usernameCek').value.trim());
