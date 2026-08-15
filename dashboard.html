@@ -3,174 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alat NOC - Sunda Version</title>
-    <!-- Tambihan font khusus kode/hacker -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>Alat NOC - Cyberpunk Sunda</title>
+    <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;600;700&family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            /* TEMA DARK DASHBOARD ADMIN */
-            --bg-body: #0d1117; 
-            --bg-surface: #161b22; 
-            --border-color: #30363d; 
+            /* TEMA MODERN CYBER-NOC / SCI-FI */
+            --bg-void: #05070a; /* Hideung poék angkasa */
+            --bg-panel: rgba(10, 15, 25, 0.85); /* Panel transparan kaca poék */
             
-            --text-main: #c9d1d9; 
-            --text-muted: #8b949e;
+            --cyber-cyan: #00f0ff; /* Biru neon futuristik */
+            --cyber-cyan-dim: rgba(0, 240, 255, 0.2);
+            --cyber-orange: #ff3c00; /* Oranye/Beureum neon jang aktivasi */
+            --cyber-orange-dim: rgba(255, 60, 0, 0.2);
             
-            --accent-blue: #2f81f7; 
-            --accent-orange: #f0883e; 
-            --success-green: #3fb950;
-            --danger-red: #da3633;
+            --hacker-green: #00ff41; /* Tetep make hejo jang terminal log */
             
-            --radius: 6px; 
-            --transition: 0.2s ease-in-out; 
+            --text-main: #e2e8f0; 
+            --text-muted: #64748b;
             
-            /* WARNA HACKER */
-            --hacker-green: #00ff41;
-            --hacker-dark: #008f11;
+            --transition: 0.3s ease; 
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 15px; }
-        .container { max-width: 600px; margin: 0 auto; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Chakra Petch', sans-serif; }
+        
+        body { 
+            background-color: var(--bg-void); 
+            color: var(--text-main); 
+            line-height: 1.5; 
+            padding: 15px;
+            /* Latar Grid Hologram */
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-position: center center;
+        }
 
-        /* HEADER ANIMASI BERJALAN (MARQUEE MULUS) */
+        .container { max-width: 600px; margin: 0 auto; position: relative; }
+
+        /* HEADER TYPEWRITER SCI-FI */
         .header { 
-            padding-bottom: 15px; 
-            border-bottom: 1px solid var(--border-color); 
-            margin-bottom: 20px; 
+            padding-bottom: 10px; 
+            border-bottom: 1px solid var(--cyber-cyan-dim); 
+            margin-bottom: 25px; 
+            display: flex;
+            align-items: center;
+            min-height: 45px;
+            position: relative;
         }
         
-        .marquee-container { width: 100%; overflow: hidden; white-space: nowrap; box-sizing: border-box; }
-        .marquee-text {
-            display: inline-block;
-            font-size: 16px;
-            font-weight: 600;
-            color: var(--accent-blue);
-            padding-left: 100%; 
-            animation: scrollMarquee 10s linear infinite;
+        .header::after {
+            content: ''; position: absolute; bottom: -2px; left: 0; width: 30%; height: 3px; background: var(--cyber-cyan); box-shadow: 0 0 10px var(--cyber-cyan);
         }
+        
+        .typewriter-text { font-size: 18px; font-weight: 700; color: var(--cyber-cyan); font-family: 'Fira Code', monospace; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 0 8px var(--cyber-cyan-dim); }
+        .cursor { font-size: 18px; font-weight: bold; color: var(--cyber-cyan); animation: blink 0.8s step-end infinite; margin-left: 5px; }
+        @keyframes blink { 50% { opacity: 0; } }
 
-        @keyframes scrollMarquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
-
-        /* TABS */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 10px; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-muted); border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); }
-        .tab-btn.active[data-tab="0"] { background: rgba(47, 129, 247, 0.1); color: var(--accent-blue); border-color: var(--accent-blue); }
-        .tab-btn.active[data-tab="1"] { background: rgba(240, 136, 62, 0.1); color: var(--accent-orange); border-color: var(--accent-orange); }
+        /* TABS (GAYA HUD FUTURISTIK) */
+        .tabs { display: flex; gap: 15px; margin-bottom: 25px; }
+        .tab-btn { 
+            flex: 1; padding: 12px; background: transparent; 
+            border: 1px solid var(--text-muted); color: var(--text-muted); 
+            font-size: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); 
+            text-transform: uppercase; letter-spacing: 1px;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        .tab-btn:hover { border-color: var(--text-main); color: var(--text-main); }
+        .tab-btn.active[data-tab="0"] { background: var(--cyber-cyan-dim); color: var(--cyber-cyan); border-color: var(--cyber-cyan); box-shadow: inset 0 0 10px var(--cyber-cyan-dim); }
+        .tab-btn.active[data-tab="1"] { background: var(--cyber-orange-dim); color: var(--cyber-orange); border-color: var(--cyber-orange); box-shadow: inset 0 0 10px var(--cyber-orange-dim); }
 
         /* PANEL */
         .panel { display: none; }
-        .panel.active { display: block; animation: fadeIn 0.2s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .panel.active { display: block; animation: hudFadeIn 0.4s ease-out forwards; }
+        @keyframes hudFadeIn { from { opacity: 0; transform: scale(0.98) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
-        /* FORM & INPUTS */
-        .card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
-        .form-control { width: 100%; padding: 10px 12px; background: var(--bg-body); border: 1px solid var(--border-color); color: #ffffff; border-radius: var(--radius); font-size: 14px; transition: var(--transition); }
-        .form-control:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.2); }
+        /* KARTU FORM (GAYA SCI-FI PANEL) */
+        .card { 
+            background: var(--bg-panel); border: 1px solid var(--cyber-cyan-dim); 
+            padding: 25px; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+        /* Sudut-sudut panel (crosshair) */
+        .card::before, .card::after { content: ''; position: absolute; width: 15px; height: 15px; border: 2px solid transparent; pointer-events: none; }
+        .card::before { top: -1px; left: -1px; border-top-color: var(--cyber-cyan); border-left-color: var(--cyber-cyan); }
+        .card::after { bottom: -1px; right: -1px; border-bottom-color: var(--cyber-cyan); border-right-color: var(--cyber-cyan); }
+        
+        .panel[id="panel1"] .card { border-color: var(--cyber-orange-dim); }
+        .panel[id="panel1"] .card::before { border-top-color: var(--cyber-orange); border-left-color: var(--cyber-orange); }
+        .panel[id="panel1"] .card::after { border-bottom-color: var(--cyber-orange); border-right-color: var(--cyber-orange); }
+
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* INPUT GAYA TERMINAL */
+        .form-control { 
+            width: 100%; padding: 12px 15px; background: rgba(0,0,0,0.5); 
+            border: 1px solid var(--border-color); border-left: 3px solid var(--text-muted);
+            color: #ffffff; font-size: 15px; transition: var(--transition); 
+            font-family: 'Fira Code', monospace;
+        }
+        .form-control:focus { outline: none; border-color: var(--cyber-cyan); border-left: 3px solid var(--cyber-cyan); box-shadow: 0 0 15px var(--cyber-cyan-dim); background: rgba(0, 240, 255, 0.05); }
+        .panel[id="panel1"] .form-control:focus { border-color: var(--cyber-orange); border-left-color: var(--cyber-orange); box-shadow: 0 0 15px var(--cyber-orange-dim); background: rgba(255, 60, 0, 0.05); }
         select.form-control { appearance: auto; cursor: pointer; }
 
-        /* BUTTONS */
-        .btn { width: 100%; padding: 12px; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 600; color: #ffffff; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px; }
-        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .btn-blue { background: var(--accent-blue); }
-        .btn-orange { background: var(--accent-orange); }
+        /* TOMBOL NEON */
+        .btn { 
+            width: 100%; padding: 14px; background: transparent; border: 1px solid; 
+            font-size: 15px; font-weight: 700; color: #ffffff; cursor: pointer; transition: var(--transition); 
+            text-transform: uppercase; letter-spacing: 2px;
+            display: flex; align-items: center; justify-content: center; margin-top: 10px;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-blue { border-color: var(--cyber-cyan); color: var(--cyber-cyan); }
+        .btn-blue:hover:not(:disabled) { background: var(--cyber-cyan); color: #000; box-shadow: 0 0 20px var(--cyber-cyan); }
+        
+        .btn-orange { border-color: var(--cyber-orange); color: var(--cyber-orange); }
+        .btn-orange:hover:not(:disabled) { background: var(--cyber-orange); color: #000; box-shadow: 0 0 20px var(--cyber-orange); }
 
         /* ==========================================
-           TERMINAL SCANNER HACKER STYLE
+           TERMINAL SCANNER HACKER (DI-UPGRADE)
         ========================================== */
         .scanner-box {
-            display: none;
-            background: #000000; /* Hitam pekat */
-            /* Efek jaring-jaring Matrix halus */
-            background-image: 
-                linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
-            background-size: 20px 20px;
-            
-            border: 1px solid var(--hacker-dark);
-            border-radius: var(--radius);
-            margin-top: 20px;
-            position: relative;
-            overflow: hidden;
-            padding: 15px;
-            box-shadow: inset 0 0 30px rgba(0,255,65,0.1), 0 0 15px rgba(0,255,65,0.2);
+            display: none; background: #000000; border: 1px solid #113311;
+            margin-top: 25px; position: relative; overflow: hidden; padding: 15px;
+            box-shadow: inset 0 0 30px rgba(0,255,65,0.1);
         }
-        .scanner-box.show { display: block; animation: expandScanner 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        
+        .scanner-box.show { display: block; animation: expandScanner 0.4s cubic-bezier(0.1, 1, 0.3, 1); }
         @keyframes expandScanner { from { max-height: 0; opacity: 0; } to { max-height: 250px; opacity: 1; } }
 
         .scan-laser {
-            position: absolute;
-            top: 0; left: 0;
-            height: 2px;
-            width: 100%;
-            background: var(--hacker-green);
-            box-shadow: 0 0 15px var(--hacker-green), 0 0 30px var(--hacker-green);
-            animation: scanRadar 2s ease-in-out infinite alternate;
-            opacity: 0.8;
+            position: absolute; top: 0; left: 0; height: 2px; width: 100%;
+            background: var(--hacker-green); box-shadow: 0 0 15px var(--hacker-green), 0 0 30px var(--hacker-green);
+            animation: scanRadar 2s ease-in-out infinite alternate; opacity: 0.8; z-index: 2;
         }
-        /* Laser gerak ti luhur ka handap siga scanner asli */
         @keyframes scanRadar { 0% { top: 0%; opacity: 0.2;} 50% { opacity: 1; } 100% { top: 100%; opacity: 0.2; } }
 
         .terminal-logs {
-            font-family: 'Space Mono', 'Fira Code', monospace; /* Font heker banget */
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--hacker-dark); /* Hejo poek jang text heubeul */
-            line-height: 1.7;
-            min-height: 100px;
-            text-shadow: 0 0 2px rgba(0, 143, 17, 0.5);
+            font-family: 'Fira Code', monospace; font-size: 12px; font-weight: 500;
+            color: #006611; line-height: 1.8; min-height: 100px; z-index: 1; position: relative;
         }
-        .log-line { display: block; transition: color 0.3s; opacity: 0.7; }
+        .log-line { display: block; opacity: 0.6; }
+        .log-line.active { color: var(--hacker-green); opacity: 1; text-shadow: 0 0 8px rgba(0, 255, 65, 0.8); }
+        .log-cursor { display: inline-block; width: 8px; height: 14px; background: var(--hacker-green); box-shadow: 0 0 8px var(--hacker-green); margin-left: 6px; vertical-align: middle; animation: blink 1s step-end infinite; }
+        .log-queue { color: var(--cyber-orange); text-shadow: 0 0 8px var(--cyber-orange); }
+
+        /* HASIL DATA (HUD GRID) */
+        .result-box { margin-top: 25px; padding-top: 25px; border-top: 1px dashed var(--cyber-cyan-dim); display: none; }
+        .panel[id="panel1"] .result-box { border-top-color: var(--cyber-orange-dim); }
+        .result-box.show { display: block; animation: fadeIn 0.4s; }
         
-        .log-line.active { 
-            color: var(--hacker-green); /* Hejo nyaangkeun */
-            opacity: 1;
-            /* Efek Glow */
-            text-shadow: 0 0 5px rgba(0, 255, 65, 0.8), 0 0 15px rgba(0, 255, 65, 0.5); 
+        .status-banner { 
+            padding: 12px; font-weight: 700; font-size: 14px; margin-bottom: 15px; 
+            text-transform: uppercase; letter-spacing: 1px;
+            background: rgba(0, 240, 255, 0.1); border-left: 4px solid var(--cyber-cyan); color: var(--cyber-cyan); 
         }
-        
-        .log-cursor {
-            display: inline-block; 
-            width: 8px; 
-            height: 15px; 
-            background: var(--hacker-green);
-            box-shadow: 0 0 8px var(--hacker-green);
-            margin-left: 6px; 
-            vertical-align: middle; 
-            animation: blinkHacker 1s step-end infinite;
-        }
-        @keyframes blinkHacker { 50% { opacity: 0; } }
+        .status-banner.success-orange { background: rgba(255, 60, 0, 0.1); border-left-color: var(--cyber-orange); color: var(--cyber-orange); }
+        .status-banner.error { background: rgba(255, 0, 0, 0.1); border-left-color: #ff0000; color: #ff0000; }
 
-        .log-queue { color: #f0883e; text-shadow: 0 0 5px #f0883e; }
-
-        /* RESULTS DATA GRID */
-        .result-box { margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 20px; display: none; }
-        .result-box.show { display: block; animation: fadeIn 0.3s; }
-        
-        .status-banner { padding: 10px; border-radius: var(--radius); font-weight: 600; font-size: 13px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        .status-success { background: rgba(35, 134, 54, 0.15); border: 1px solid var(--success-green); color: var(--success-green); }
-        .status-error { background: rgba(218, 54, 51, 0.15); border: 1px solid var(--danger-red); color: #ff7b72; }
-
-        .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 15px; }
-        .data-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 10px; border-radius: var(--radius); }
-        .data-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+        .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .data-item { background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); padding: 12px; }
+        .data-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 1px; }
         .data-value { font-family: 'Fira Code', monospace; font-size: 13px; color: #ffffff; word-break: break-all; }
-        .value-green { color: var(--success-green); }
-        .value-red { color: #ff7b72; }
+        .value-cyan { color: var(--cyber-cyan); text-shadow: 0 0 5px var(--cyber-cyan-dim); }
+        .value-orange { color: var(--cyber-orange); text-shadow: 0 0 5px var(--cyber-orange-dim); }
+        .value-red { color: #ff0000; }
 
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- HEADER MARQUEE -->
+        <!-- HEADER TYPEWRITER -->
         <div class="header">
-            <div class="marquee-container">
-                <div class="marquee-text">Parios Redaman & Aktivasi Isolir</div>
+            <div>
+                <span id="typewriterText" class="typewriter-text"></span><span class="cursor">_</span>
             </div>
         </div>
 
@@ -187,14 +197,14 @@
                     <div class="form-group">
                         <label class="form-label">Pilih Server OLT</label>
                         <select class="form-control" id="serverCek" required>
-                            <option value="">-- Pilih Server --</option>
+                            <option value="">-- PILIH SERVER --</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Username Pelanggan</label>
                         <input type="text" class="form-control" id="usernameCek" placeholder="user.pppoe" required autocomplete="off">
                     </div>
-                    <button type="submit" class="btn btn-blue" id="btnCek">Scan</button>
+                    <button type="submit" class="btn btn-blue" id="btnCek">MULAI PARIOS</button>
                 </form>
 
                 <!-- TERMINAL SCANNER (CEK) -->
@@ -210,24 +220,24 @@
 
         <!-- TAB 1: AKTIVASI -->
         <div class="panel" id="panel1">
-            <div class="card" style="border-color: rgba(240, 136, 62, 0.3);">
+            <div class="card">
                 <form id="formAktivasi">
                     <div class="form-group">
                         <label class="form-label">Pilih Server Mikrotik</label>
                         <select class="form-control" id="serverAktivasi" required>
-                            <option value="">-- Pilih Server --</option>
+                            <option value="">-- PILIH SERVER --</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Username Pelanggan</label>
                         <input type="text" class="form-control" id="usernameAktivasi" placeholder="user.pppoe" required autocomplete="off">
                     </div>
-                    <button type="submit" class="btn btn-orange" id="btnAktivasi">Aktipkeun</button>
+                    <button type="submit" class="btn btn-orange" id="btnAktivasi">JALANKEUN AKTIVASI</button>
                 </form>
 
                 <!-- TERMINAL SCANNER (AKTIVASI) -->
                 <div class="scanner-box" id="scannerAktivasi">
-                    <div class="scan-laser"></div> <!-- Saruakeun hejo ngarah siga alat hacker -->
+                    <div class="scan-laser"></div>
                     <div class="terminal-logs" id="logAktivasi"></div>
                 </div>
                 
@@ -238,7 +248,23 @@
     </div>
 
     <script>
-        // 1. TABS
+        // 1. ANIMASI HEADER TYPEWRITER (Ngetik)
+        const textToType = "[SYS] Parios Redaman & Aktivasi Isolir";
+        const typeTarget = document.getElementById("typewriterText");
+        let typeIndex = 0;
+
+        function typeWriter() {
+            if (typeIndex < textToType.length) {
+                typeTarget.innerHTML += textToType.charAt(typeIndex);
+                typeIndex++;
+                setTimeout(typeWriter, 80); // Laju kacepetan ngetik
+            } else {
+                setTimeout(() => { typeTarget.innerHTML = ''; typeIndex = 0; typeWriter(); }, 10000); 
+            }
+        }
+        setTimeout(typeWriter, 500);
+
+        // 2. TABS SWITCHING
         const tabBtns = document.querySelectorAll('.tab-btn');
         const panels = document.querySelectorAll('.panel');
         tabBtns.forEach(btn => {
@@ -251,7 +277,7 @@
             });
         });
 
-        // 2. LOAD SERVERS
+        // 3. LOAD SERVERS
         async function loadServers() {
             try {
                 const res = await fetch('/api/servers');
@@ -265,27 +291,27 @@
             } catch (err) {}
         }
 
-        // 3. FUNGSI TERMINAL LOG HACKER (Basa Sunda)
+        // 4. FUNGSI TERMINAL LOG HACKER
         let logIntervals = {};
         
         const dummyLogsCek = [
-            "Ngamimitian protokol koneksi...",
-            "Mariksa sandi server...",
-            "Nge-ping ka node OLT...",
-            "Neang data interface ONU...",
-            "Maca modul optik TX/RX...",
-            "Ngitung data redaman...",
-            "Nyiapkeun hasil..."
+            "Nyambungkeun ka port optik...",
+            "Meunangkeun otoritas server...",
+            "Nge-ping ka node OLT utama...",
+            "Maca status antarmuka ONU...",
+            "Ngitung kaluaran daya laser...",
+            "Verifikasi data redaman (dBm)...",
+            "Ekstrak hasil akhir..."
         ];
 
         const dummyLogsAkt = [
-            "Nyambung ka Mikrotik API...",
-            "Milarian profil PPPoE aktif...",
-            "Mariksa address-list firewall...",
-            "Mupus aturan isolir...",
-            "Ngamimitian deui interface klien...",
-            "Mastikeun koneksi jalan...",
-            "Ngapihkeun aktivasi..."
+            "Bypass protokol kaamanan API...",
+            "Ngaksés database Mikrotik...",
+            "Milarian profil PPPoE...",
+            "Ngahapus rule address-list isolir...",
+            "Restart interface klien...",
+            "Sistem online... Verifikasi rute...",
+            "Aktivasi direngsekeun..."
         ];
 
         function startScanner(target, isAktivasi) {
@@ -297,17 +323,15 @@
             const logsArray = isAktivasi ? dummyLogsAkt : dummyLogsCek;
             let step = 0;
 
-            printLogLine(logBox, "> BYPASSING SECURITY LAYER...");
-            setTimeout(() => {
-                printLogLine(logBox, "> Nyambungkeun kana sistem aman...");
-            }, 400);
+            printLogLine(logBox, "> ROOT ACCESS GRANTED...");
+            setTimeout(() => { printLogLine(logBox, "> Ngamimitian runtuyan eksekusi..."); }, 300);
 
             logIntervals[target] = setInterval(() => {
                 if (step < logsArray.length) {
                     printLogLine(logBox, `> ${logsArray[step]}`);
                     step++;
                 }
-            }, 700); // Rodo di-gancangkeun sangkan lincah
+            }, 600); // Laju terminal pas proses
         }
 
         function printLogLine(container, text, isQueue = false) {
@@ -318,10 +342,7 @@
                 if(cursor) cursor.remove();
             });
 
-            // Neundeun 4 baris log sangkan katingali prosés ka handapna
-            if(prevLines.length > 4) {
-                prevLines[0].remove();
-            }
+            if(prevLines.length > 4) prevLines[0].remove();
 
             const div = document.createElement('div');
             div.className = `log-line active ${isQueue ? 'log-queue' : ''}`;
@@ -331,7 +352,7 @@
 
         function setQueueLog(target, position, wait) {
             const logBox = document.getElementById(`log${target}`);
-            printLogLine(logBox, `[SISTEM SIBUK] Ngantri di posisi #${position}... Antos ${wait} detik`, true);
+            printLogLine(logBox, `[SISTEM PINUH] Nungguan giliran #${position}... Antos ${wait}s`, true);
         }
 
         function stopScanner(target) {
@@ -339,19 +360,20 @@
             document.getElementById(`scanner${target}`).classList.remove('show');
         }
 
-        // 4. OLT PARSER & BUILDER (Basa Sunda)
+        // 5. OLT PARSER & BUILDER (HUD Grid)
         function parseOLTResult(oltText) {
-            if(!oltText) return { oltName: 'Teu Kanyahoan', redaman: 'N/A', status: 'Teu Kanyahoan' };
+            if(!oltText) return { oltName: 'TEU KANYAHOAN', redaman: 'N/A', status: 'TEU KANYAHOAN' };
             const lines = oltText.split('\n').filter(line => line.trim());
             const oltName = lines[0]?.replace(/[✅*]/g, '').trim() || 'OLT';
             const redaman = lines[1]?.match(/Redaman:\s*\*?([^\*]*)\*?/)?.[1].trim() || 'N/A';
-            const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Teu Kanyahoan';
+            const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'TEU KANYAHOAN';
             return { oltName, redaman, status };
         }
 
         function buildDashboardResult(data, isAktivasi) {
             let html = '';
-            html += `<div class="status-banner status-success">Rengse ✓</div>`;
+            let bannerClass = isAktivasi ? 'success-orange' : '';
+            html += `<div class="status-banner ${bannerClass}">[✓] PROSES RENGSE</div>`;
 
             html += `<div class="data-grid">`;
             html += `<div class="data-item"><div class="data-label">USERNAME</div><div class="data-value">${data.username || '-'}</div></div>`;
@@ -362,23 +384,23 @@
 
             if (data.olt && data.olt !== 'ONU tidak ditemukan di OLT manapun') {
                 const olt = parseOLTResult(data.olt);
-                let rxColor = (olt.redaman.includes('-') && parseFloat(olt.redaman) < -25) ? 'value-red' : 'value-green';
-                html += `<div class="data-item" style="grid-column: 1 / -1;"><div class="data-label">Ngaran OLT</div><div class="data-value">${olt.oltName}</div></div>`;
+                let rxColor = (olt.redaman.includes('-') && parseFloat(olt.redaman) < -25) ? 'value-red' : 'value-cyan';
+                html += `<div class="data-item" style="grid-column: 1 / -1;"><div class="data-label">NGARAN OLT NODE</div><div class="data-value">${olt.oltName}</div></div>`;
                 html += `<div class="data-item"><div class="data-label">REDAMAN (RX)</div><div class="data-value ${rxColor}">${olt.redaman}</div></div>`;
                 html += `<div class="data-item"><div class="data-label">STATUS ONU</div><div class="data-value">${olt.status}</div></div>`;
             } else if (data.olt) {
-                html += `<div class="data-item" style="grid-column: 1 / -1; border-color:var(--danger-red);"><div class="data-label">STATUS OLT</div><div class="data-value value-red">ONU Teu Kapendak</div></div>`;
+                html += `<div class="data-item" style="grid-column: 1 / -1; border-color:var(--cyber-orange);"><div class="data-label">STATUS OLT</div><div class="data-value value-red">ONU TEU KAPENDAK</div></div>`;
             }
             html += `</div>`;
             return html;
         }
 
         function renderError(targetDiv, errMsg) {
-            targetDiv.innerHTML = `<div class="status-banner status-error">✗ [GAGAL] ${errMsg}</div>`;
+            targetDiv.innerHTML = `<div class="status-banner error">[✗] GAGAL: ${errMsg}</div>`;
             targetDiv.classList.add('show');
         }
 
-        // 5. CORE PROCESS
+        // 6. CORE PROCESS
         let queuePollingInterval;
 
         async function processScan(action, serverKey, username) {
@@ -387,11 +409,12 @@
             const resultDiv = document.getElementById(`result${targetName}`);
             const btn = document.getElementById(`btn${targetName}`);
             const endpoint = isAktivasi ? '/api/aktivasi' : '/api/cek-redaman';
+            const btnOriginalText = isAktivasi ? 'JALANKEUN AKTIVASI' : 'MULAI PARIOS';
 
             resultDiv.classList.remove('show');
             resultDiv.innerHTML = '';
             btn.disabled = true;
-            btn.innerHTML = 'Nuju Proses...';
+            btn.innerHTML = 'NUJU EKSEKUSI...';
             
             startScanner(targetName, isAktivasi);
 
@@ -405,30 +428,30 @@
                 
                 if (data.queued) {
                     setQueueLog(targetName, data.position, data.estimatedWait);
-                    pollForResult(data.queueId, targetName, resultDiv, isAktivasi, btn);
+                    pollForResult(data.queueId, targetName, resultDiv, isAktivasi, btn, btnOriginalText);
                     return;
                 }
                 
                 stopScanner(targetName);
                 btn.disabled = false;
-                btn.innerHTML = isAktivasi ? 'Aktipkeun' : 'Scan';
+                btn.innerHTML = btnOriginalText;
                 
                 if (data.success) {
                     resultDiv.innerHTML = buildDashboardResult(data.data, isAktivasi);
                     resultDiv.classList.add('show');
                 } else {
-                    renderError(resultDiv, data.error || 'Proses gagal dilaksanakeun.');
+                    renderError(resultDiv, data.error || 'Eksekusi gagal diprosés.');
                 }
             } catch (err) {
                 stopScanner(targetName);
                 btn.disabled = false;
-                btn.innerHTML = isAktivasi ? 'Aktipkeun' : 'Scan';
+                btn.innerHTML = btnOriginalText;
                 renderError(resultDiv, err.message);
             }
         }
 
-        // 6. POLLING
-        async function pollForResult(queueId, targetName, resultDiv, isAktivasi, btn) {
+        // 7. POLLING
+        async function pollForResult(queueId, targetName, resultDiv, isAktivasi, btn, btnOriginalText) {
             queuePollingInterval = setInterval(async () => {
                 try {
                     const res = await fetch(`/api/queue-result/${queueId}`);
@@ -438,7 +461,7 @@
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
                         stopScanner(targetName);
                         btn.disabled = false;
-                        btn.innerHTML = isAktivasi ? 'Aktipkeun' : 'Scan';
+                        btn.innerHTML = btnOriginalText;
                         
                         resultDiv.innerHTML = buildDashboardResult(data.data, isAktivasi);
                         resultDiv.classList.add('show');
@@ -447,7 +470,7 @@
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
                         stopScanner(targetName);
                         btn.disabled = false;
-                        btn.innerHTML = isAktivasi ? 'Aktipkeun' : 'Scan';
+                        btn.innerHTML = btnOriginalText;
                         
                         renderError(resultDiv, data.error);
                     }
@@ -455,7 +478,7 @@
             }, 2000);
         }
 
-        // 7. TRIGGERS
+        // 8. TRIGGERS
         document.getElementById('formCek').addEventListener('submit', async (e) => {
             e.preventDefault();
             await processScan('cek', document.getElementById('serverCek').value, document.getElementById('usernameCek').value.trim());
