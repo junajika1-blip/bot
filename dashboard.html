@@ -2,635 +2,369 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#000000">
-    <title>RnBNET - Cek Redaman & Aktivasi</title>
-    <!-- Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RnBNET - NOC Tools</title>
+    <!-- Font Inter & Fira Code (Monospace) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            /* TEMA ADMIN TEKNISI / PRO DASHBOARD */
-            --bg-dark: #09090b; /* Hitam pekat Carbon */
-            --tech-blue: #2563eb; /* Biru khas dashboard monitoring */
-            --cyan-glow: #06b6d4; /* Cyan terang ala fiber / laser */
-            --warning-orange: #f97316; /* Oranye industrial / splicer */
-            --emerald-green: #10b981; /* Hijau terminal / Status ON */
+            /* TEMA DARK DASHBOARD ADMIN */
+            --bg-body: #0d1117; /* Hitam gelap */
+            --bg-surface: #161b22; /* Abu-abu sangat gelap untuk form/card */
+            --border-color: #30363d; /* Garis batas tegas */
             
-            --glass-white: rgba(30, 41, 59, 0.65); /* Kaca gelap (Dark Slate) */
-            --glass-border: rgba(255, 255, 255, 0.08); /* Border tipis lebih redup */
-            --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-            --text-main: #f8fafc; /* Putih keabu-abuan (tidak menyilaukan) */
-            --text-muted: #94a3b8;
+            --text-main: #c9d1d9; /* Teks abu terang */
+            --text-muted: #8b949e;
             
-            --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            --smooth: cubic-bezier(0.4, 0, 0.2, 1);
-            --safe-top: env(safe-area-inset-top, 40px);
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --accent-blue: #2f81f7; /* Biru aksi (Cek) */
+            --accent-orange: #f0883e; /* Oranye aksi (Aktivasi) */
+            --success-green: #238636;
+            --danger-red: #da3633;
+            
+            --radius: 6px; /* Sudut kaku/tegas */
+            --transition: 0.15s ease-in-out; /* Animasi sangat cepat */
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'SF Pro Display', 'Inter', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
         body {
-            background-color: var(--bg-dark);
+            background-color: var(--bg-body);
             color: var(--text-main);
-            overflow-x: hidden;
-            overscroll-behavior-y: none;
-            user-select: none;
-            min-height: 100vh;
+            line-height: 1.5;
+            padding: 15px;
         }
 
-        /* SERVER ROOM GLOW BACKGROUND (MENGGANTIKAN AURORA) */
-        .bg-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; overflow: hidden; background: var(--bg-dark); }
-        .aurora-blob { position: absolute; border-radius: 50%; filter: blur(100px); animation: float 20s infinite ease-in-out alternate; }
-        .blob-1 { top: -10%; left: -10%; width: 60vw; height: 60vw; background: var(--tech-blue); animation-delay: 0s; opacity: 0.25; }
-        .blob-2 { top: 40%; right: -20%; width: 70vw; height: 70vw; background: var(--emerald-green); animation-delay: -5s; opacity: 0.15; }
-        .blob-3 { bottom: -20%; left: 20%; width: 50vw; height: 50vw; background: var(--cyan-glow); animation-delay: -10s; opacity: 0.15; }
-        .blob-4 { top: 20%; left: 30%; width: 40vw; height: 40vw; background: var(--warning-orange); opacity: 0.1; animation-delay: -15s; }
-        
-        .noise-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.5; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
-        .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-
-        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(10vw, 10vh) scale(1.1); } 100% { transform: translate(-5vw, 15vh) scale(0.9); } }
-
-        /* SPLASH SCREEN */
-        .splash-screen { position: fixed; inset: 0; background: rgba(15, 15, 19, 0.8); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); z-index: 99999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.8s ease, visibility 0.8s ease; }
-        .splash-logo { width: 80px; height: 80px; background: linear-gradient(135deg, var(--royal-blue), var(--pink-glow)); border-radius: 22px; margin-bottom: 20px; box-shadow: 0 0 40px rgba(92, 50, 255, 0.5); animation: pulseLogo 2s infinite; display: flex; align-items: center; justify-content: center; font-size: 40px; }
-        @keyframes pulseLogo { 0% { transform: scale(0.95); box-shadow: 0 0 20px rgba(92, 50, 255, 0.3); } 50% { transform: scale(1.05); box-shadow: 0 0 50px rgba(255, 46, 147, 0.6); } 100% { transform: scale(0.95); box-shadow: 0 0 20px rgba(92, 50, 255, 0.3); } }
-
-        /* STATUS BAR & DYNAMIC ISLAND */
-        .status-bar { position: fixed; top: 0; left: 0; width: 100%; height: var(--safe-top); display: flex; justify-content: space-between; align-items: flex-end; padding: 0 25px 10px; z-index: 1000; font-size: 14px; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-        .status-left, .status-right { width: 60px; display: flex; justify-content: center; }
-        .status-right { gap: 6px; align-items: center; }
-        .dynamic-island { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); width: 120px; height: 28px; background: #000; border-radius: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; transition: width 0.4s var(--spring), height 0.4s var(--spring); overflow: hidden; }
-        .dynamic-island.active { width: 200px; height: 35px; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        .di-content { display: none; font-size: 12px; color: var(--accent-cyan); align-items: center; gap: 8px; }
-        .dynamic-island.active .di-content { display: flex; animation: fadeIn 0.4s ease forwards; }
+        /* CONTAINER */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
         /* HEADER */
-        .header { margin-top: calc(var(--safe-top) + 20px); padding: 15px 20px; text-align: center; position: sticky; top: var(--safe-top); z-index: 100; animation: slideDown 0.8s var(--spring); }
-        .header-glass { background: var(--glass-white); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: 25px; padding: 15px; box-shadow: var(--glass-shadow); display: inline-block; }
-        .header h1 { font-size: 18px; font-weight: 700; background: linear-gradient(to right, #fff, rgba(255,255,255,0.7)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.5px; }
-        .header p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .header-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-badge {
+            background: rgba(47, 129, 247, 0.15);
+            color: var(--accent-blue);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+            border: 1px solid rgba(47, 129, 247, 0.3);
+        }
 
-        /* SEGMENTED CONTROL */
-        .segment-container { margin: 20px 20px; background: rgba(0,0,0,0.3); backdrop-filter: blur(20px); border-radius: 20px; padding: 5px; position: relative; display: flex; border: 1px solid rgba(255,255,255,0.05); }
-        .segment-bg { position: absolute; top: 5px; left: 5px; height: calc(100% - 10px); width: calc(50% - 5px); background: rgba(255,255,255,0.15); border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.2); transition: transform 0.5s var(--spring); }
-        .segment-btn { flex: 1; padding: 12px 0; text-align: center; font-size: 14px; font-weight: 600; color: var(--text-muted); z-index: 1; position: relative; transition: all 0.3s; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .segment-btn.active { color: #fff; text-shadow: 0 2px 10px rgba(255,255,255,0.3); }
-        .segment-btn.active .seg-icon { transform: scale(1.1); color: var(--accent-cyan); }
-        .seg-icon { transition: transform 0.3s var(--spring); }
+        /* TABS (FLAT & FUNCTIONAL) */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .tab-btn:hover {
+            border-color: #8b949e;
+        }
+        .tab-btn.active[data-tab="0"] {
+            background: rgba(47, 129, 247, 0.1);
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+        .tab-btn.active[data-tab="1"] {
+            background: rgba(240, 136, 62, 0.1);
+            color: var(--accent-orange);
+            border-color: var(--accent-orange);
+        }
 
-        /* SLIDER CONTAINER */
-        .app-container { position: relative; width: 100%; overflow: hidden; min-height: 500px; }
-        .slider-wrapper { display: flex; width: 200%; transition: transform 0.6s var(--spring); }
-        .slide { width: 50%; padding: 0 20px; }
+        /* PANEL CONTENT */
+        .panel { display: none; }
+        .panel.active { display: block; animation: fadeIn 0.2s ease-in; }
 
-        /* FLOATING CARD */
-        .glass-card { background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02)); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border: 1px solid var(--glass-border); border-radius: 35px; padding: 30px 25px; box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.4); position: relative; overflow: hidden; transform-style: preserve-3d; animation: floatCard 8s ease-in-out infinite alternate; }
-        @keyframes floatCard { 0% { transform: translateY(0); } 100% { transform: translateY(-10px); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* FORM & INPUTS */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text-main);
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            color: #ffffff;
+            border-radius: var(--radius);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.2);
+        }
+        select.form-control {
+            appearance: auto; /* Menggunakan select bawaan yang simpel */
+            cursor: pointer;
+        }
+
+        /* BUTTONS */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .btn-blue { background: var(--accent-blue); }
+        .btn-blue:hover:not(:disabled) { background: #1f6feb; }
+        .btn-orange { background: var(--accent-orange); }
+        .btn-orange:hover:not(:disabled) { background: #d77632; }
+
+        /* TERMINAL STYLE RESULTS */
+        .result-box {
+            margin-top: 20px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 20px;
+            display: none;
+        }
+        .result-box.show { display: block; }
         
-        .card-icon-wrapper { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
-        .card-icon { width: 60px; height: 60px; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 28px; background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)); border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 10px 20px rgba(0,0,0,0.2), inset 0 2px 2px rgba(255,255,255,0.5); position: relative; overflow: hidden; }
-        .card-icon::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.6), transparent); transform: skewX(-25deg); animation: shine 4s infinite; }
-        
-        /* FORM INPUTS (FLOATING LABEL) */
-        .form-group { margin-bottom: 22px; position: relative; }
-        .input-glass { width: 100%; padding: 18px 15px 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; font-size: 15px; color: #fff; outline: none; transition: all 0.3s var(--smooth); backdrop-filter: blur(10px); }
-        .form-group label { position: absolute; left: 16px; top: 16px; color: rgba(255,255,255,0.5); font-size: 15px; transition: all 0.3s var(--smooth); pointer-events: none; font-weight: 500; }
-        .input-glass:focus { background: rgba(0,0,0,0.4); border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(0, 240, 255, 0.2); }
-        .input-glass:focus + label, .input-glass:not(:placeholder-shown) + label { top: 6px; font-size: 11px; color: var(--accent-cyan); }
-        .input-glass::placeholder { color: transparent; }
+        .status-banner {
+            padding: 10px;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-success { background: rgba(35, 134, 54, 0.15); border: 1px solid var(--success-green); color: #3fb950; }
+        .status-error { background: rgba(218, 54, 51, 0.15); border: 1px solid var(--danger-red); color: #ff7b72; }
 
-        /* CUSTOM PICKER (iOS STYLE) */
-        .custom-select-btn { width: 100%; padding: 15px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; font-size: 15px; color: #fff; text-align: left; display: flex; justify-content: space-between; align-items: center; cursor: pointer; backdrop-filter: blur(10px); }
-        .picker-sheet { position: fixed; bottom: -100%; left: 0; width: 100%; background: rgba(20, 20, 25, 0.85); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border-radius: 30px 30px 0 0; padding: 20px; z-index: 10000; transition: bottom 0.5s var(--spring); border-top: 1px solid var(--glass-border); }
-        .picker-sheet.open { bottom: 0; }
-        .picker-header { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 0 10px; }
-        .picker-title { font-weight: 600; font-size: 16px; }
-        .picker-close { color: var(--royal-blue); font-weight: 600; cursor: pointer; }
-        .picker-list { max-height: 30vh; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom); }
-        .picker-item { padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 16px; text-align: center; cursor: pointer; transition: background 0.2s; border-radius: 12px; }
-        .picker-item:hover, .picker-item:active { background: rgba(255,255,255,0.1); }
-        .picker-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; display: none; opacity: 0; transition: opacity 0.3s; }
-        .picker-overlay.open { display: block; opacity: 1; }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .data-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: var(--radius);
+        }
+        .data-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .data-value {
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: #ffffff;
+            word-break: break-all;
+        }
+        .value-green { color: #3fb950; }
+        .value-red { color: #ff7b72; }
 
-        /* PREMIUM BUTTON (TECH STYLE) */
-        .btn-premium { width: 100%; padding: 18px; border: none; border-radius: 25px; font-size: 16px; font-weight: 700; color: #fff; cursor: pointer; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 10px; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 20px rgba(0,0,0,0.4); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        /* QUEUE & LOADING STATUS */
+        .system-status {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-family: 'Fira Code', monospace;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .system-status.show { display: flex; }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .dot-pulse {
+            background: var(--warning);
+            animation: blink 1s infinite;
+        }
+        @keyframes blink { 50% { opacity: 0.3; } }
         
-        /* Tombol Cek Redaman (Tech Blue) */
-        .btn-primary { background: linear-gradient(135deg, var(--tech-blue), #1d4ed8); border: 1px solid rgba(37, 99, 235, 0.5); }
-        
-        /* Tombol Aktivasi (Industrial Orange) */
-        .btn-secondary { background: linear-gradient(135deg, var(--warning-orange), #ea580c); border: 1px solid rgba(249, 115, 22, 0.5); }
-        
-        .btn-premium::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, transparent 100%); pointer-events: none; }
-        .btn-premium::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent); transform: skewX(-20deg); animation: shine 4s infinite; }
-        .btn-premium:active { transform: scale(0.96); }
-        .btn-premium:disabled { opacity: 0.4; cursor: not-allowed; animation: none; transform: none; box-shadow: none; }
-
-        @keyframes shine { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
-
-        /* RESULTS (PREMIUM CARDS) */
-        .result-container { margin-top: 25px; display: none; }
-        .result-container.show { display: block; }
-        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .result-mini-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px; padding: 12px; backdrop-filter: blur(10px); transform: translateY(20px); opacity: 0; animation: popUp 0.6s var(--spring) forwards; }
-        .result-mini-card.full { grid-column: 1 / -1; }
-        .res-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block; }
-        .res-value { font-size: 14px; font-weight: 600; word-break: break-all; }
-        .res-value.success { color: #32D74B; }
-        .res-value.danger { color: #FF453A; }
-        
-        @keyframes popUp { to { transform: translateY(0); opacity: 1; } }
-
-        /* LOADING (LIQUID/APPLE STYLE) */
-        .overlay-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 10000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.4s; }
-        .overlay-modal.show { display: flex; opacity: 1; }
-        .apple-loader-box { background: rgba(30,30,35,0.8); border: 1px solid rgba(255,255,255,0.15); border-radius: 35px; padding: 40px; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 30px 60px rgba(0,0,0,0.5); transform: scale(0.9); transition: transform 0.5s var(--spring); }
-        .overlay-modal.show .apple-loader-box { transform: scale(1); }
-        
-        /* Morphing Circle Loader */
-        .morph-loader { width: 60px; height: 60px; border-radius: 50%; border: 3px solid transparent; border-top-color: var(--accent-cyan); border-right-color: var(--royal-blue); margin: 0 auto 20px; animation: spinMorph 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite; }
-        @keyframes spinMorph { 0% { transform: rotate(0deg) scale(1); border-radius: 50%; } 50% { transform: rotate(180deg) scale(1.2); border-radius: 40%; } 100% { transform: rotate(360deg) scale(1); border-radius: 50%; } }
-        
-        .loader-title { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
-        .loader-text { font-size: 13px; color: var(--text-muted); }
-        
-        /* QUEUE BOX IN LOADER */
-        .q-box { margin-top: 20px; background: rgba(255, 159, 10, 0.1); border: 1px solid rgba(255, 159, 10, 0.3); border-radius: 15px; padding: 12px; text-align: left; display: none; }
-        .q-pos { font-size: 20px; font-weight: 700; color: #FF9F0A; margin-bottom: 2px; }
-        .q-wait { font-size: 12px; color: rgba(255,255,255,0.7); }
-        .q-list { margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 8px; font-size: 11px; max-height: 60px; overflow-y: auto; color: #bbb; }
-
-        /* SUCCESS / ERROR POPUPS */
-        .popup-icon { width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 35px; box-shadow: 0 0 30px currentColor; }
-        .icon-success { background: rgba(50, 215, 75, 0.2); color: #32D74B; border: 2px solid #32D74B; animation: popBounce 0.6s var(--spring); }
-        .icon-error { background: rgba(255, 69, 58, 0.2); color: #FF453A; border: 2px solid #FF453A; animation: shake 0.5s; }
-        .btn-modal { width: 100%; padding: 14px; border-radius: 18px; border: none; font-weight: 600; font-size: 15px; margin-top: 20px; cursor: pointer; transition: 0.2s; }
-        .btn-modal-close { background: rgba(255,255,255,0.1); color: #fff; }
-        .btn-modal-close:active { background: rgba(255,255,255,0.2); }
-        .btn-modal-primary { background: #fff; color: #000; }
-        
-        @keyframes popBounce { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
-
-        /* BOTTOM GESTURE BAR */
-        .bottom-gesture { position: fixed; bottom: 8px; left: 50%; transform: translateX(-50%); width: 140px; height: 5px; background: rgba(255,255,255,0.4); border-radius: 10px; z-index: 9999; backdrop-filter: blur(5px); }
-
-        /* PULL TO REFRESH (Visual Only) */
-        .ptr-indicator { text-align: center; position: absolute; top: -40px; left: 0; width: 100%; color: var(--text-muted); font-size: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
-        .ptr-spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; margin-bottom: 5px; }
-
-        /* HAPTIC / RIPPLE EFFECT */
-        .ripple { position: absolute; border-radius: 50%; transform: scale(0); animation: ripple-anim 0.6s linear; background: rgba(255,255,255,0.3); pointer-events: none; }
-        @keyframes ripple-anim { to { transform: scale(4); opacity: 0; } }
+        .inline-loader { display: none; margin-left: 8px; font-style: normal; }
+        .inline-loader.show { display: inline-block; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
     </style>
 </head>
 <body>
 
-    <!-- AURORA & NOISE BACKGROUND -->
-    <div class="bg-container">
-        <div class="aurora-blob blob-1"></div>
-        <div class="aurora-blob blob-2"></div>
-        <div class="aurora-blob blob-3"></div>
-        <div class="aurora-blob blob-4"></div>
-        <div class="noise-overlay"></div>
-        <canvas id="particleCanvas" class="particles"></canvas>
-    </div>
-
-    <!-- SPLASH SCREEN -->
-    <div class="splash-screen" id="splashScreen">
-        <div class="splash-logo">RnB</div>
-        <h2 style="font-weight: 700; letter-spacing: 2px;">RnB Network</h2>
-        <p style="color: var(--text-muted); font-size: 12px; margin-top: 10px;">Created; Iyann</p>
-    </div>
-
-    <!-- STATUS BAR -->
-    <div class="status-bar">
-        <div class="status-left" id="liveClock">00:00</div>
-        <div class="status-right">
-            <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M1 9.5H3M5 7.5H7M9 5.5H11M13 2.5H15" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-            <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 12L0 4C4.41828 -0.418278 11.5817 -0.418278 16 4L8 12Z" fill="white"/></svg>
-            <svg width="22" height="12" viewBox="0 0 22 12" fill="none"><rect x="1" y="1" width="18" height="10" rx="3" stroke="white" stroke-width="1.5"/><rect x="20" y="4" width="2" height="4" rx="1" fill="white"/><rect x="3" y="3" width="14" height="6" rx="1" fill="white"/></svg>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                RnBNET NOC
+            </div>
+            <div class="header-badge">v1.2.0-stable</div>
         </div>
-    </div>
-    
-    <!-- DYNAMIC ISLAND -->
-    <div class="dynamic-island" id="dynamicIsland">
-        <div class="di-content" id="diContent">
-            <div class="morph-loader" style="width: 14px; height: 14px; border-width: 2px; margin:0;"></div>
-            <span id="diText">Processing...</span>
-        </div>
-    </div>
 
-    <!-- HEADER -->
-    <header class="header">
-        <div class="ptr-indicator" id="ptrIndicator"><div class="ptr-spinner"></div>Release to refresh</div>
-        <div class="header-glass">
-            <h1>Cek Redaman & Aktivasi</h1>
-            <p>Created by Iyann</p>
+        <!-- TABS NAV -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="0">Cek Redaman</button>
+            <button class="tab-btn" data-tab="1">Aktivasi Isolir</button>
         </div>
-    </header>
 
-    <!-- MAIN SEGMENTED CONTROL -->
-    <div class="segment-container">
-        <div class="segment-bg" id="segmentBg"></div>
-        <div class="segment-btn active" data-index="0">
-            <span class="seg-icon">🔍</span> Cek Redaman
-        </div>
-        <div class="segment-btn" data-index="1">
-            <span class="seg-icon">⚡</span> Aktivasi
-        </div>
-    </div>
-
-    <!-- SLIDER APP CONTENT -->
-    <div class="app-container" id="appContainer">
-        <div class="slider-wrapper" id="sliderWrapper">
-            
-            <!-- TAB 0: CEK REDAMAN -->
-            <div class="slide">
-                <div class="glass-card">
-                    <div class="card-icon-wrapper">
-                        <div class="card-icon" style="color: var(--accent-cyan);">🔍</div>
-                        <div>
-                            <h2 style="font-size: 20px;">Redaman OLT</h2>
-                            <p style="font-size: 12px; color: var(--text-muted);">Scan status pelanggan</p>
-                        </div>
+        <!-- TAB 0: CEK REDAMAN -->
+        <div class="panel active" id="panel0">
+            <div class="card">
+                <form id="formCek">
+                    <div class="form-group">
+                        <label class="form-label">Pilih Server OLT</label>
+                        <select class="form-control" id="serverCek" required>
+                            <option value="">-- Dropdown Server --</option>
+                        </select>
                     </div>
-                    
-                    <form id="formCek">
-                        <!-- Custom Select (Cek) -->
-                        <div class="form-group">
-                            <div class="custom-select-btn" onclick="openPicker('serverCek')">
-                                <span id="label_serverCek" style="color:rgba(255,255,255,0.5)">Pilih Server</span>
-                                <span>▼</span>
-                            </div>
-                            <input type="hidden" id="serverCek" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <input type="text" id="usernameCek" class="input-glass" placeholder=" " required autocomplete="off" autocorrect="off" autocapitalize="off">
-                            <label>Username Pelanggan</label>
-                        </div>
-                        
-                        <button type="submit" class="btn-premium btn-primary" id="btnCek">
-                            <span style="position:relative; z-index:2;">Scan Redaman</span>
-                        </button>
-                    </form>
-
-                    <div id="resultCek" class="result-container"></div>
-                </div>
-            </div>
-
-            <!-- TAB 1: AKTIVASI -->
-            <div class="slide">
-                <div class="glass-card">
-                    <div class="card-icon-wrapper">
-                        <div class="card-icon" style="color: var(--pink-glow);">⚡</div>
-                        <div>
-                            <h2 style="font-size: 20px;">Aktivasi Isolir</h2>
-                            <p style="font-size: 12px; color: var(--text-muted);">Aktifkan koneksi pelanggan</p>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Username Pelanggan</label>
+                        <input type="text" class="form-control" id="usernameCek" placeholder="user.pppoe" required autocomplete="off">
                     </div>
-                    
-                    <form id="formAktivasi">
-                        <!-- Custom Select (Aktivasi) -->
-                        <div class="form-group">
-                            <div class="custom-select-btn" onclick="openPicker('serverAktivasi')">
-                                <span id="label_serverAktivasi" style="color:rgba(255,255,255,0.5)">Pilih Server</span>
-                                <span>▼</span>
-                            </div>
-                            <input type="hidden" id="serverAktivasi" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <input type="text" id="usernameAktivasi" class="input-glass" placeholder=" " required autocomplete="off" autocorrect="off" autocapitalize="off">
-                            <label>Username Pelanggan</label>
-                        </div>
-                        
-                        <button type="submit" class="btn-premium btn-secondary" id="btnAktivasi">
-                            <span style="position:relative; z-index:2;">Aktivasi Sekarang</span>
-                        </button>
-                    </form>
-
-                    <div id="resultAktivasi" class="result-container"></div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <!-- CUSTOM PICKER BOTTOM SHEET -->
-    <div class="picker-overlay" id="pickerOverlay" onclick="closePicker()"></div>
-    <div class="picker-sheet" id="pickerSheet">
-        <div class="picker-header">
-            <span class="picker-title">Pilih Server</span>
-            <span class="picker-close" onclick="closePicker()">Selesai</span>
-        </div>
-        <div class="picker-list" id="pickerList">
-            <!-- Items injected by JS -->
-        </div>
-    </div>
-
-    <!-- LOADER / QUEUE OVERLAY -->
-    <div class="overlay-modal" id="loadingOverlay">
-        <div class="apple-loader-box">
-            <div class="morph-loader"></div>
-            <div class="loader-title" id="loadingTitle">Memproses...</div>
-            <div class="loader-text" id="loadingMessage">Scanning OLT system</div>
-            
-            <div class="q-box" id="queueInfoBox">
-                <div class="q-pos" id="queuePosition">Antrian #1</div>
-                <div class="q-wait" id="queueWait">Estimasi: ~90s</div>
-                <div class="q-list" id="queueList"></div>
+                    <button type="submit" class="btn btn-blue" id="btnCek">
+                        Execute Scan <span class="inline-loader" id="loadCek">↻</span>
+                    </button>
+                </form>
+                
+                <!-- HASIL CEK -->
+                <div id="resultCek" class="result-box"></div>
             </div>
         </div>
-    </div>
 
-    <!-- SUCCESS / ERROR MODAL -->
-    <div class="overlay-modal" id="resultModal">
-        <div class="apple-loader-box" style="padding: 30px 25px;">
-            <div id="modalIcon"></div>
-            <div class="loader-title" id="modalTitle" style="margin-top:10px;">Berhasil</div>
-            <div class="loader-text" id="modalMessage">Proses telah selesai.</div>
-            <button class="btn-modal btn-modal-close" onclick="closeModal()">Tutup</button>
+        <!-- TAB 1: AKTIVASI -->
+        <div class="panel" id="panel1">
+            <div class="card" style="border-color: rgba(240, 136, 62, 0.3);">
+                <form id="formAktivasi">
+                    <div class="form-group">
+                        <label class="form-label">Pilih Server Mikrotik</label>
+                        <select class="form-control" id="serverAktivasi" required>
+                            <option value="">-- Dropdown Server --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username Pelanggan</label>
+                        <input type="text" class="form-control" id="usernameAktivasi" placeholder="user.pppoe" required autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-orange" id="btnAktivasi">
+                        Run Activation <span class="inline-loader" id="loadAktivasi">↻</span>
+                    </button>
+                </form>
+                
+                <!-- HASIL AKTIVASI -->
+                <div id="resultAktivasi" class="result-box"></div>
+            </div>
         </div>
+
     </div>
 
-    <!-- QUEUE CHOICE MODAL -->
-    <div class="overlay-modal" id="choiceOverlay">
-        <div class="apple-loader-box">
-            <div class="popup-icon" style="background: rgba(255,159,10,0.2); color: #FF9F0A; border: 2px solid #FF9F0A;">⚠️</div>
-            <div class="loader-title">Sistem Sibuk</div>
-            <div class="loader-text" id="choiceMessage" style="margin-bottom: 20px;">Teknisi lain sedang scanning.</div>
-            <button class="btn-modal btn-modal-primary" id="btnWaitQueue" style="margin-top:0; margin-bottom:10px; background:var(--royal-blue); color:#fff;">Tunggu Antrian</button>
-            <button class="btn-modal btn-modal-close" id="btnLater" style="margin-top:0;">Kembali Nanti</button>
-        </div>
+    <!-- GLOBAL QUEUE STATUS INDICATOR -->
+    <div class="system-status" id="systemStatus">
+        <div class="status-dot dot-pulse" style="background:#d29922;"></div>
+        <span id="systemStatusText">Queue: 0 | Idle</span>
     </div>
-
-    <!-- BOTTOM GESTURE -->
-    <div class="bottom-gesture"></div>
 
     <script>
-        /* ==========================================
-           1. CORE UI ANIMATIONS & EFFECTS
-        ========================================== */
-        
-        // Splash Screen
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const splash = document.getElementById('splashScreen');
-                splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 800);
-            }, 1500);
-        });
+        // 1. SIMPLE TAB SWITCHING
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.panel');
 
-        // Live Clock
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('liveClock').textContent = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        }, 1000);
-
-        // Segmented Control & Slider Logic
-        let currentTab = 0;
-        const segmentBtns = document.querySelectorAll('.segment-btn');
-        const segmentBg = document.getElementById('segmentBg');
-        const sliderWrapper = document.getElementById('sliderWrapper');
-
-        segmentBtns.forEach((btn, index) => {
-            btn.addEventListener('click', () => switchTab(index));
-        });
-
-        function switchTab(index) {
-            currentTab = index;
-            // Update UI Tab
-            segmentBtns.forEach(b => b.classList.remove('active'));
-            segmentBtns[index].classList.add('active');
-            
-            // Move Background Pill
-            segmentBg.style.transform = `translateX(${index * 100}%)`;
-            
-            // Move Slider with Spring effect
-            sliderWrapper.style.transform = `translateX(-${index * 50}%)`;
-            
-            // Haptic feedback (if supported)
-            if (navigator.vibrate) navigator.vibrate(15);
-        }
-
-        // Swipe Gesture for Slider
-        let touchStartX = 0, touchEndX = 0;
-        const appContainer = document.getElementById('appContainer');
-        appContainer.addEventListener('touchstart', e => touchStartX = e.changedTouches[0].screenX, {passive: true});
-        appContainer.addEventListener('touchend', e => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, {passive: true});
-
-        function handleSwipe() {
-            const diff = touchStartX - touchEndX;
-            if (Math.abs(diff) > 50) {
-                if (diff > 0 && currentTab === 0) switchTab(1);
-                else if (diff < 0 && currentTab === 1) switchTab(0);
-            }
-        }
-
-        // Button Ripple Effect
-        document.querySelectorAll('button, .custom-select-btn').forEach(btn => {
-            btn.addEventListener('click', function(e) {
-                let rect = this.getBoundingClientRect();
-                let x = e.clientX - rect.left;
-                let y = e.clientY - rect.top;
-                let ripple = document.createElement('span');
-                ripple.className = 'ripple';
-                ripple.style.left = `${x}px`;
-                ripple.style.top = `${y}px`;
-                this.appendChild(ripple);
-                setTimeout(() => ripple.remove(), 600);
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.getAttribute('data-tab');
+                
+                tabBtns.forEach(b => b.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById(`panel${target}`).classList.add('active');
             });
         });
 
-        // Background Particles
-        const canvas = document.getElementById('particleCanvas');
-        const ctx = canvas.getContext('2d');
-        let particlesArray = [];
-        
-        function initParticles() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            particlesArray = [];
-            for (let i = 0; i < 30; i++) {
-                particlesArray.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 2,
-                    speedY: Math.random() * -0.5 - 0.1,
-                    opacity: Math.random() * 0.5
-                });
-            }
-        }
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            particlesArray.forEach(p => {
-                p.y += p.speedY;
-                if (p.y < 0) { p.y = canvas.height; p.x = Math.random() * canvas.width; }
-                ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                ctx.fill();
-            });
-            requestAnimationFrame(animateParticles);
-        }
-        initParticles(); animateParticles();
-        window.addEventListener('resize', initParticles);
-
-
-        /* ==========================================
-           2. CUSTOM DROP-DOWN (iOS PICKER LOGIC)
-        ========================================== */
-        
-        let currentSelectTarget = '';
-        let serverOptions = [];
-
+        // 2. LOAD SERVERS (Native Select)
         async function loadServers() {
             try {
-                // Fetch to original endpoint
                 const res = await fetch('/api/servers');
                 const data = await res.json();
-                serverOptions = data.servers || [];
-            } catch (err) {
-                // Fallback for visual testing if offline
-                serverOptions = [
-                    { label: "Server Mikrotik 1", key: "srv1" },
-                    { label: "Server OLT ZTE", key: "srv2" },
-                    { label: "Server OLT Huawei", key: "srv3" }
-                ];
-            }
-        }
-
-        function openPicker(targetId) {
-            currentSelectTarget = targetId;
-            const listDiv = document.getElementById('pickerList');
-            listDiv.innerHTML = '';
-            
-            if(serverOptions.length === 0) {
-                listDiv.innerHTML = '<div class="picker-item" style="color:#aaa;">Loading servers...</div>';
-            } else {
-                serverOptions.forEach((opt, i) => {
-                    const div = document.createElement('div');
-                    div.className = 'picker-item';
-                    div.textContent = opt.label;
-                    // Staggered animation
-                    div.style.opacity = '0';
-                    div.style.transform = 'translateY(20px)';
-                    div.style.transition = 'all 0.3s ease';
-                    
-                    div.onclick = () => selectOption(opt.key, opt.label);
-                    listDiv.appendChild(div);
-                    
-                    setTimeout(() => {
-                        div.style.opacity = '1';
-                        div.style.transform = 'translateY(0)';
-                    }, i * 50);
+                const selCek = document.getElementById('serverCek');
+                const selAkt = document.getElementById('serverAktivasi');
+                
+                data.servers.forEach(srv => {
+                    selCek.add(new Option(srv.label, srv.key));
+                    selAkt.add(new Option(srv.label, srv.key));
                 });
-            }
-
-            document.getElementById('pickerOverlay').classList.add('open');
-            document.getElementById('pickerSheet').classList.add('open');
-        }
-
-        function closePicker() {
-            document.getElementById('pickerOverlay').classList.remove('open');
-            document.getElementById('pickerSheet').classList.remove('open');
-        }
-
-        function selectOption(key, label) {
-            // Set Hidden Input
-            document.getElementById(currentSelectTarget).value = key;
-            // Set UI Label
-            const uiLabel = document.getElementById(`label_${currentSelectTarget}`);
-            uiLabel.textContent = label;
-            uiLabel.style.color = '#fff';
-            
-            // Haptic
-            if (navigator.vibrate) navigator.vibrate(10);
-            closePicker();
-        }
-
-
-        /* ==========================================
-           3. API LOGIC & DATA PARSING
-        ========================================== */
-
-        // Dynamic Island Logic
-        const dynamicIsland = document.getElementById('dynamicIsland');
-        const diText = document.getElementById('diText');
-        
-        function showDynamicIsland(text) {
-            diText.textContent = text;
-            dynamicIsland.classList.add('active');
-        }
-        function hideDynamicIsland() {
-            dynamicIsland.classList.remove('active');
-        }
-
-        // Overlay Modals
-        function showModal(type, title, message) {
-            const modal = document.getElementById('resultModal');
-            const iconDiv = document.getElementById('modalIcon');
-            const titleDiv = document.getElementById('modalTitle');
-            const msgDiv = document.getElementById('modalMessage');
-
-            if(type === 'success') {
-                iconDiv.innerHTML = '<div class="popup-icon icon-success">✓</div>';
-                if(navigator.vibrate) navigator.vibrate([20, 50, 20]); // Success pattern
-            } else {
-                iconDiv.innerHTML = '<div class="popup-icon icon-error">✕</div>';
-                if(navigator.vibrate) navigator.vibrate([50, 50, 50]); // Error pattern
-            }
-
-            titleDiv.textContent = title;
-            msgDiv.textContent = message;
-            modal.classList.add('show');
-        }
-
-        function closeModal() {
-            document.getElementById('resultModal').classList.remove('show');
-        }
-
-        function showLoading(isQueued = false, position = 0, estimatedWait = 0) {
-            const overlay = document.getElementById('loadingOverlay');
-            const title = document.getElementById('loadingTitle');
-            const msg = document.getElementById('loadingMessage');
-            const qBox = document.getElementById('queueInfoBox');
-            
-            overlay.classList.add('show');
-            
-            if (isQueued) {
-                title.textContent = 'Dalam Antrian';
-                msg.textContent = 'Teknisi lain sedang memproses.';
-                qBox.style.display = 'block';
-                document.getElementById('queuePosition').textContent = `Antrian #${position}`;
-                const m = Math.floor(estimatedWait / 60);
-                const s = estimatedWait % 60;
-                document.getElementById('queueWait').textContent = `Estimasi: ~${m>0?m+'m ':''}${s}s`;
-                showDynamicIsland(`Antrian #${position}`);
-            } else {
-                title.textContent = '⏳ Sedang Memproses...';
-                msg.textContent = 'Sistem sedang melakukan scanning OLT dan memeriksa data pelanggan';
-                qBox.style.display = 'none';
-                showDynamicIsland('Scanning...');
+            } catch (err) {
+                console.warn("Gagal memuat server (API offline)");
             }
         }
 
-        function hideLoading() {
-            document.getElementById('loadingOverlay').classList.remove('show');
-            hideDynamicIsland();
-            if (queuePollingInterval) { clearInterval(queuePollingInterval); queuePollingInterval = null; }
-        }
-
-        // Parse OLT text exactly as original
+        // 3. OLT PARSER UTILITY
         function parseOLTResult(oltText) {
             if(!oltText) return { oltName: 'Unknown', redaman: 'N/A', status: 'Unknown' };
             const lines = oltText.split('\n').filter(line => line.trim());
@@ -640,203 +374,150 @@
             return { oltName, redaman, status };
         }
 
-        // Builder for Premium Grid Result
-        function buildGridResult(data, isAktivasi) {
-            let html = '<div class="result-grid">';
+        // 4. HTML BUILDER UNTUK HASIL (TERMINAL STYLE)
+        function buildDashboardResult(data, isAktivasi) {
+            let html = '';
             
-            // Helper to generate animated card
-            let delay = 0;
-            const makeCard = (label, val, styleClass="", full=false) => {
-                const style = `animation-delay: ${delay}ms;`;
-                delay += 100; // Stagger
-                return `<div class="result-mini-card ${full?'full':''}" style="${style}">
-                            <span class="res-label">${label}</span>
-                            <span class="res-value ${styleClass}">${val}</span>
-                        </div>`;
-            };
-
-            // Basic Info
-            if(isAktivasi && data.status) html += makeCard("Status Aktivasi", data.status, "success", true);
-            html += makeCard("Username", data.username || '-');
-            html += makeCard("Server", data.server || '-');
-            if(data.ip) html += makeCard("IP Address", data.ip);
-            if(data.mac) html += makeCard("MAC Address", data.mac);
-            if(data.paket) html += makeCard("Paket", data.paket);
-
-            // OLT Parse
-            if (data.olt && data.olt !== 'ONU tidak ditemukan di OLT manapun') {
-                const olt = parseOLTResult(data.olt);
-                html += makeCard("Nama OLT", olt.oltName, "", true);
-                
-                // Colorize Redaman based on typical logic (if < -25 bad, etc. For now just format)
-                let rxClass = (olt.redaman.includes('-') && parseFloat(olt.redaman) < -25) ? 'danger' : 'success';
-                html += makeCard("Redaman (RX)", olt.redaman, rxClass);
-                html += makeCard("Status ONU", olt.status);
-            } else if (data.olt) {
-                html += makeCard("OLT Status", "ONU Tidak Ditemukan", "danger", true);
+            // Banner Sukses
+            if(isAktivasi) {
+                html += `<div class="status-banner status-success">✓ [OK] Aktivasi ${data.status || 'Berhasil'}</div>`;
+            } else {
+                html += `<div class="status-banner status-success">✓ [OK] Query Selesai</div>`;
             }
 
-            html += '</div>';
+            html += `<div class="data-grid">`;
+            
+            // Detail Dasar
+            html += `<div class="data-item"><div class="data-label">USERNAME</div><div class="data-value">${data.username || '-'}</div></div>`;
+            html += `<div class="data-item"><div class="data-label">SERVER</div><div class="data-value">${data.server || '-'}</div></div>`;
+            
+            if(data.ip) html += `<div class="data-item"><div class="data-label">IP ADDRESS</div><div class="data-value">${data.ip}</div></div>`;
+            if(data.mac) html += `<div class="data-item"><div class="data-label">MAC ADDRESS</div><div class="data-value">${data.mac}</div></div>`;
+            if(data.paket) html += `<div class="data-item"><div class="data-label">PROFILE / PAKET</div><div class="data-value">${data.paket}</div></div>`;
+
+            // Data OLT
+            if (data.olt && data.olt !== 'ONU tidak ditemukan di OLT manapun') {
+                const olt = parseOLTResult(data.olt);
+                let rxColor = (olt.redaman.includes('-') && parseFloat(olt.redaman) < -25) ? 'value-red' : 'value-green';
+                
+                html += `<div class="data-item" style="grid-column: 1 / -1;"><div class="data-label">OLT NODE</div><div class="data-value">${olt.oltName}</div></div>`;
+                html += `<div class="data-item"><div class="data-label">RX POWER</div><div class="data-value ${rxColor}">${olt.redaman}</div></div>`;
+                html += `<div class="data-item"><div class="data-label">ONU STATUS</div><div class="data-value">${olt.status}</div></div>`;
+            } else if (data.olt) {
+                html += `<div class="data-item" style="grid-column: 1 / -1; border-color:var(--danger-red);"><div class="data-label">OLT STATUS</div><div class="data-value value-red">ONU Not Found</div></div>`;
+            }
+
+            html += `</div>`;
             return html;
         }
 
-        /* ==========================================
-           4. QUEUE & SUBMIT LOGIC (Preserved Original Flow)
-        ========================================== */
+        // 5. CORE PROCESS (SCAN / AKTIVASI)
         let queuePollingInterval;
-        let pendingAction = null;
-        let pendingData = null;
 
-        // Queue Status background check
-        async function updateQueueStatus() {
-            try {
-                const res = await fetch('/api/queue-status');
-                const data = await res.json();
-                
-                // If we are currently showing queue loader, update list
-                if(document.getElementById('loadingOverlay').classList.contains('show') && data.waitingList) {
-                    const qList = document.getElementById('queueList');
-                    qList.innerHTML = data.waitingList.map(i => `<div>#${i.position} ${i.username}</div>`).join('');
-                }
-            } catch (err) {}
+        function setBtnLoading(btnId, loaderId, isLoading) {
+            const btn = document.getElementById(btnId);
+            const loader = document.getElementById(loaderId);
+            btn.disabled = isLoading;
+            if(isLoading) loader.classList.add('show');
+            else loader.classList.remove('show');
         }
 
-        function showQueueChoiceModal(action, serverKey, username) {
-            pendingAction = action;
-            pendingData = { serverKey, username };
-            
-            const actionName = action === 'cek' ? 'Cek Redaman' : 'Aktivasi';
-            document.getElementById('choiceMessage').textContent = `Sistem sedang sibuk melakukan ${actionName}. Tunggu di antrian?`;
-            
-            document.getElementById('choiceOverlay').classList.add('show');
-            if (navigator.vibrate) navigator.vibrate(20);
+        function renderError(targetDiv, errMsg) {
+            targetDiv.innerHTML = `<div class="status-banner status-error">✗ [ERROR] ${errMsg}</div>`;
+            targetDiv.classList.add('show');
         }
 
-        document.getElementById('btnWaitQueue').addEventListener('click', async () => {
-            document.getElementById('choiceOverlay').classList.remove('show');
-            if (pendingAction === 'cek') await processScan('cek', pendingData.serverKey, pendingData.username);
-            else if (pendingAction === 'aktivasi') await processScan('aktivasi', pendingData.serverKey, pendingData.username);
-        });
-
-        document.getElementById('btnLater').addEventListener('click', () => {
-            document.getElementById('choiceOverlay').classList.remove('show');
-            if (pendingAction === 'cek') document.getElementById('btnCek').disabled = false;
-            if (pendingAction === 'aktivasi') document.getElementById('btnAktivasi').disabled = false;
-            pendingAction = null; pendingData = null;
-        });
-
-        // Main Process
         async function processScan(action, serverKey, username) {
             const isAktivasi = action === 'aktivasi';
             const resultDiv = document.getElementById(isAktivasi ? 'resultAktivasi' : 'resultCek');
-            const btn = document.getElementById(isAktivasi ? 'btnAktivasi' : 'btnCek');
+            const btnId = isAktivasi ? 'btnAktivasi' : 'btnCek';
+            const loaderId = isAktivasi ? 'loadAktivasi' : 'loadCek';
             const endpoint = isAktivasi ? '/api/aktivasi' : '/api/cek-redaman';
 
-            if(!serverKey) {
-                showModal('error', 'Validasi Gagal', 'Harap pilih server terlebih dahulu.');
-                return;
-            }
-
-            btn.disabled = true;
             resultDiv.classList.remove('show');
             resultDiv.innerHTML = '';
-            showLoading(false);
+            
+            setBtnLoading(btnId, loaderId, true);
 
             try {
-                const res = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ serverKey, username }) });
+                const res = await fetch(endpoint, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ serverKey, username }) 
+                });
                 const data = await res.json();
                 
                 if (data.queued) {
-                    showLoading(true, data.position, data.estimatedWait);
-                    pollForResult(data.queueId, resultDiv, btn, isAktivasi);
+                    // Update global status indicator
+                    const statusUI = document.getElementById('systemStatus');
+                    const statusText = document.getElementById('systemStatusText');
+                    statusUI.classList.add('show');
+                    statusText.textContent = `Processing | Queue #${data.position}`;
+                    
+                    pollForResult(data.queueId, btnId, loaderId, resultDiv, isAktivasi);
                     return;
                 }
                 
-                hideLoading();
+                setBtnLoading(btnId, loaderId, false);
+                
                 if (data.success) {
-                    // LANGSUNG TAMPILKAN HASIL TANPA POPUP
-                    resultDiv.innerHTML = buildGridResult(data.data, isAktivasi);
+                    resultDiv.innerHTML = buildDashboardResult(data.data, isAktivasi);
                     resultDiv.classList.add('show');
-                    
-                    // Trigger getaran halus ala iPhone (jika didukung HP)
-                    if(navigator.vibrate) navigator.vibrate([20, 50, 20]); 
                 } else {
-                    throw new Error(data.error || `Gagal ${isAktivasi ? 'aktivasi' : 'cek redaman'}`);
+                    renderError(resultDiv, data.error || 'Eksekusi gagal dilakukan.');
                 }
             } catch (err) {
-                hideLoading();
-                showModal('error', 'Terjadi Kesalahan', err.message); // Popup error tetap muncul
-            } finally {
-                if (!queuePollingInterval) btn.disabled = false;
+                setBtnLoading(btnId, loaderId, false);
+                renderError(resultDiv, err.message);
             }
         }
 
-        // Polling (Untuk Antrian)
-        async function pollForResult(queueId, resultDiv, btn, isAktivasi) {
+        // 6. POLLING UNTUK SISTEM ANTRIAN
+        async function pollForResult(queueId, btnId, loaderId, resultDiv, isAktivasi) {
             queuePollingInterval = setInterval(async () => {
                 try {
                     const res = await fetch(`/api/queue-result/${queueId}`);
                     const data = await res.json();
+                    
                     if (data.status === 'done') {
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
-                        hideLoading(); btn.disabled = false;
+                        setBtnLoading(btnId, loaderId, false);
+                        document.getElementById('systemStatus').classList.remove('show');
                         
-                        // LANGSUNG TAMPILKAN HASIL TANPA POPUP
-                        resultDiv.innerHTML = buildGridResult(data.data, isAktivasi);
+                        resultDiv.innerHTML = buildDashboardResult(data.data, isAktivasi);
                         resultDiv.classList.add('show');
-                        
-                        // Trigger getaran halus ala iPhone
-                        if(navigator.vibrate) navigator.vibrate([20, 50, 20]);
                         
                     } else if (data.status === 'error') {
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
-                        hideLoading(); btn.disabled = false;
-                        showModal('error', 'Gagal', data.error); // Popup error tetap muncul
+                        setBtnLoading(btnId, loaderId, false);
+                        document.getElementById('systemStatus').classList.remove('show');
+                        
+                        renderError(resultDiv, data.error);
                     }
-                } catch (err) { console.error('Polling error:', err); }
+                } catch (err) { 
+                    console.error('Polling error:', err); 
+                }
             }, 2000);
         }
 
-        // Form Binds
+        // 7. FORM SUBMITS
         document.getElementById('formCek').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const serverKey = document.getElementById('serverCek').value;
-            const username = document.getElementById('usernameCek').value.trim();
-            const btn = document.getElementById('btnCek');
-            btn.disabled = true;
-
-            try {
-                const statusRes = await fetch('/api/queue-status');
-                const statusData = await statusRes.json();
-                if (statusData.isProcessing) showQueueChoiceModal('cek', serverKey, username);
-                else await processScan('cek', serverKey, username);
-            } catch (err) { 
-                // Fallback offline / no api
-                await processScan('cek', serverKey, username); 
-            }
+            const srv = document.getElementById('serverCek').value;
+            const usr = document.getElementById('usernameCek').value.trim();
+            await processScan('cek', srv, usr);
         });
 
         document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const serverKey = document.getElementById('serverAktivasi').value;
-            const username = document.getElementById('usernameAktivasi').value.trim();
-            const btn = document.getElementById('btnAktivasi');
-            btn.disabled = true;
-
-            try {
-                const statusRes = await fetch('/api/queue-status');
-                const statusData = await statusRes.json();
-                if (statusData.isProcessing) showQueueChoiceModal('aktivasi', serverKey, username);
-                else await processScan('aktivasi', serverKey, username);
-            } catch (err) {
-                await processScan('aktivasi', serverKey, username); 
-            }
+            const srv = document.getElementById('serverAktivasi').value;
+            const usr = document.getElementById('usernameAktivasi').value.trim();
+            await processScan('aktivasi', srv, usr);
         });
 
         // Initialize
         loadServers();
-        setInterval(updateQueueStatus, 3000);
-        
+
     </script>
 </body>
 </html>
