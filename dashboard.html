@@ -40,6 +40,18 @@
             background-position: center center;
         }
 
+        /* MATRIX CANVAS BACKGROUND */
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1; /* Posisina di tukangeun kabéh elemen */
+            opacity: 0.15; /* Transparan 15% ngarah teu ngaganggu UI hareup */
+            pointer-events: none; /* Teu bisa di-klik */
+        }
+
         .container { max-width: 600px; margin: 0 auto; position: relative; }
 
         /* HEADER TYPEWRITER SCI-FI */
@@ -107,6 +119,7 @@
         }
         .form-control:focus { outline: none; border-color: var(--cyber-cyan); border-left: 3px solid var(--cyber-cyan); box-shadow: 0 0 15px var(--cyber-cyan-dim); background: rgba(0, 240, 255, 0.05); }
         .panel[id="panel1"] .form-control:focus { border-color: var(--cyber-orange); border-left-color: var(--cyber-orange); box-shadow: 0 0 15px var(--cyber-orange-dim); background: rgba(255, 60, 0, 0.05); }
+        
         /* PERBAIKAN DROPDOWN (SANGKAN TEU BODAS) */
         select.form-control { 
             appearance: auto; 
@@ -143,7 +156,7 @@
         .btn-orange:hover:not(:disabled) { background: var(--cyber-orange); color: #000; box-shadow: 0 0 20px var(--cyber-orange); }
 
         /* ==========================================
-           TERMINAL SCANNER HACKER (DI-UPGRADE)
+           TERMINAL SCANNER HACKER
         ========================================== */
         .scanner-box {
             display: none; background: #000000; border: 1px solid #113311;
@@ -193,6 +206,9 @@
     </style>
 </head>
 <body>
+
+    <!-- MATRIX BACKGROUND CANVAS -->
+    <canvas id="matrixCanvas"></canvas>
 
     <div class="container">
         <!-- HEADER TYPEWRITER -->
@@ -266,6 +282,50 @@
     </div>
 
     <script>
+        // ==========================================
+        // MATRIX RAIN BACKGROUND ANIMATION
+        // ==========================================
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Karakter Matrix nu turun
+        const chars = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレゲゼデベペオォコソトノホモヨョロゴゾドボポヴッンABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const fontSize = 14;
+        let columns = canvas.width / fontSize;
+        let drops = [];
+
+        for (let x = 0; x < columns; x++) drops[x] = 1;
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(5, 7, 10, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff41'; // Warna hejo hacker
+            ctx.font = fontSize + 'px "Fira Code", monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 33);
+
+        // ==========================================
+        // SISA SCRIPT UI APLIKASI
+        // ==========================================
+        
         // 1. ANIMASI HEADER TYPEWRITER (Ngetik)
         const textToType = "[SYS] Parios Redaman & Aktivasi Isolir";
         const typeTarget = document.getElementById("typewriterText");
