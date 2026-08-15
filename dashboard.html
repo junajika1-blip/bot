@@ -4,255 +4,123 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RnBNET - NOC Tools</title>
-    <!-- Font Inter & Fira Code (Monospace) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     
     <style>
         :root {
             /* TEMA DARK DASHBOARD ADMIN */
-            --bg-body: #0d1117; /* Hitam gelap */
-            --bg-surface: #161b22; /* Abu-abu sangat gelap untuk form/card */
-            --border-color: #30363d; /* Garis batas tegas */
+            --bg-body: #0d1117; 
+            --bg-surface: #161b22; 
+            --border-color: #30363d; 
             
-            --text-main: #c9d1d9; /* Teks abu terang */
+            --text-main: #c9d1d9; 
             --text-muted: #8b949e;
             
-            --accent-blue: #2f81f7; /* Biru aksi (Cek) */
-            --accent-orange: #f0883e; /* Oranye aksi (Aktivasi) */
-            --success-green: #238636;
+            --accent-blue: #2f81f7; 
+            --accent-orange: #f0883e; 
+            --success-green: #3fb950;
             --danger-red: #da3633;
             
-            --radius: 6px; /* Sudut kaku/tegas */
-            --transition: 0.15s ease-in-out; /* Animasi sangat cepat */
+            --radius: 6px; 
+            --transition: 0.2s ease-in-out; 
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            line-height: 1.5;
-            padding: 15px;
-        }
-
-        /* CONTAINER */
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        body { background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 15px; }
+        .container { max-width: 600px; margin: 0 auto; }
 
         /* HEADER */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 15px;
-            border-bottom: 1px solid var(--border-color);
-            margin-bottom: 20px;
-        }
-        .header-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .header-badge {
-            background: rgba(47, 129, 247, 0.15);
-            color: var(--accent-blue);
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            font-family: 'Fira Code', monospace;
-            border: 1px solid rgba(47, 129, 247, 0.3);
-        }
+        .header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
+        .header-title { font-size: 18px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 10px; }
+        .header-badge { background: rgba(47, 129, 247, 0.15); color: var(--accent-blue); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: 'Fira Code', monospace; border: 1px solid rgba(47, 129, 247, 0.3); }
 
-        /* TABS (FLAT & FUNCTIONAL) */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            border-radius: var(--radius);
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .tab-btn:hover {
-            border-color: #8b949e;
-        }
-        .tab-btn.active[data-tab="0"] {
-            background: rgba(47, 129, 247, 0.1);
-            color: var(--accent-blue);
-            border-color: var(--accent-blue);
-        }
-        .tab-btn.active[data-tab="1"] {
-            background: rgba(240, 136, 62, 0.1);
-            color: var(--accent-orange);
-            border-color: var(--accent-orange);
-        }
+        /* TABS */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 10px; background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-muted); border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+        .tab-btn.active[data-tab="0"] { background: rgba(47, 129, 247, 0.1); color: var(--accent-blue); border-color: var(--accent-blue); }
+        .tab-btn.active[data-tab="1"] { background: rgba(240, 136, 62, 0.1); color: var(--accent-orange); border-color: var(--accent-orange); }
 
-        /* PANEL CONTENT */
+        /* PANEL */
         .panel { display: none; }
         .panel.active { display: block; animation: fadeIn 0.2s ease-in; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* FORM & INPUTS */
-        .card {
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: var(--text-main);
-        }
-        .form-control {
-            width: 100%;
-            padding: 10px 12px;
-            background: var(--bg-body);
-            border: 1px solid var(--border-color);
-            color: #ffffff;
-            border-radius: var(--radius);
-            font-size: 14px;
-            transition: var(--transition);
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.2);
-        }
-        select.form-control {
-            appearance: auto; /* Menggunakan select bawaan yang simpel */
-            cursor: pointer;
-        }
+        .card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text-main); }
+        .form-control { width: 100%; padding: 10px 12px; background: var(--bg-body); border: 1px solid var(--border-color); color: #ffffff; border-radius: var(--radius); font-size: 14px; transition: var(--transition); }
+        .form-control:focus { outline: none; border-color: var(--accent-blue); box-shadow: 0 0 0 3px rgba(47, 129, 247, 0.2); }
+        select.form-control { appearance: auto; cursor: pointer; }
 
         /* BUTTONS */
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: var(--radius);
-            font-size: 14px;
-            font-weight: 600;
-            color: #ffffff;
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 5px;
-        }
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 600; color: #ffffff; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-blue { background: var(--accent-blue); }
-        .btn-blue:hover:not(:disabled) { background: #1f6feb; }
         .btn-orange { background: var(--accent-orange); }
-        .btn-orange:hover:not(:disabled) { background: #d77632; }
 
-        /* TERMINAL STYLE RESULTS */
-        .result-box {
-            margin-top: 20px;
-            border-top: 1px dashed var(--border-color);
-            padding-top: 20px;
+        /* ==========================================
+           TERMINAL SCANNER ANIMATION (BARU)
+        ========================================== */
+        .scanner-box {
             display: none;
-        }
-        .result-box.show { display: block; }
-        
-        .status-banner {
-            padding: 10px;
+            background: #010409;
+            border: 1px solid var(--border-color);
             border-radius: var(--radius);
-            font-weight: 600;
-            font-size: 13px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+            padding: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
         }
-        .status-success { background: rgba(35, 134, 54, 0.15); border: 1px solid var(--success-green); color: #3fb950; }
+        .scanner-box.show { display: block; animation: expandScanner 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        @keyframes expandScanner { from { max-height: 0; opacity: 0; } to { max-height: 200px; opacity: 1; } }
+
+        .scan-laser {
+            position: absolute;
+            top: 0; left: 0;
+            height: 2px;
+            width: 30%;
+            background: var(--accent-blue);
+            box-shadow: 0 0 10px var(--accent-blue), 0 0 20px var(--accent-blue);
+            animation: scanRadar 1.5s ease-in-out infinite alternate;
+        }
+        .scan-laser.orange { background: var(--accent-orange); box-shadow: 0 0 10px var(--accent-orange), 0 0 20px var(--accent-orange); }
+        
+        @keyframes scanRadar { 0% { left: -10%; } 100% { left: 80%; } }
+
+        .terminal-logs {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            min-height: 80px;
+        }
+        .log-line { display: block; }
+        .log-line.active { color: #ffffff; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        .log-cursor {
+            display: inline-block; width: 6px; height: 12px; background: #ffffff;
+            margin-left: 5px; vertical-align: middle; animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .log-queue { color: #d29922; font-weight: 600; }
+
+        /* RESULTS DATA GRID */
+        .result-box { margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 20px; display: none; }
+        .result-box.show { display: block; animation: fadeIn 0.3s; }
+        
+        .status-banner { padding: 10px; border-radius: var(--radius); font-weight: 600; font-size: 13px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .status-success { background: rgba(35, 134, 54, 0.15); border: 1px solid var(--success-green); color: var(--success-green); }
         .status-error { background: rgba(218, 54, 51, 0.15); border: 1px solid var(--danger-red); color: #ff7b72; }
 
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-        .data-item {
-            background: rgba(255,255,255,0.02);
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            border-radius: var(--radius);
-        }
-        .data-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-        .data-value {
-            font-family: 'Fira Code', monospace;
-            font-size: 13px;
-            color: #ffffff;
-            word-break: break-all;
-        }
-        .value-green { color: #3fb950; }
+        .data-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 15px; }
+        .data-item { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); padding: 10px; border-radius: var(--radius); }
+        .data-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+        .data-value { font-family: 'Fira Code', monospace; font-size: 13px; color: #ffffff; word-break: break-all; }
+        .value-green { color: var(--success-green); }
         .value-red { color: #ff7b72; }
-
-        /* QUEUE & LOADING STATUS */
-        .system-status {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-surface);
-            border: 1px solid var(--border-color);
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-family: 'Fira Code', monospace;
-            display: none;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-            z-index: 1000;
-        }
-        .system-status.show { display: flex; }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        .dot-pulse {
-            background: var(--warning);
-            animation: blink 1s infinite;
-        }
-        @keyframes blink { 50% { opacity: 0.3; } }
-        
-        .inline-loader { display: none; margin-left: 8px; font-style: normal; }
-        .inline-loader.show { display: inline-block; animation: spin 1s linear infinite; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
 
     </style>
 </head>
@@ -262,10 +130,10 @@
         <!-- HEADER -->
         <div class="header">
             <div class="header-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
                 RnBNET NOC
             </div>
-            <div class="header-badge">v1.2.0-stable</div>
+            <div class="header-badge">Terminal v2.0</div>
         </div>
 
         <!-- TABS NAV -->
@@ -288,12 +156,16 @@
                         <label class="form-label">Username Pelanggan</label>
                         <input type="text" class="form-control" id="usernameCek" placeholder="user.pppoe" required autocomplete="off">
                     </div>
-                    <button type="submit" class="btn btn-blue" id="btnCek">
-                        Execute Scan <span class="inline-loader" id="loadCek">↻</span>
-                    </button>
+                    <button type="submit" class="btn btn-blue" id="btnCek">Execute Scan</button>
                 </form>
+
+                <!-- TERMINAL SCANNER (CEK) -->
+                <div class="scanner-box" id="scannerCek">
+                    <div class="scan-laser"></div>
+                    <div class="terminal-logs" id="logCek"></div>
+                </div>
                 
-                <!-- HASIL CEK -->
+                <!-- HASIL -->
                 <div id="resultCek" class="result-box"></div>
             </div>
         </div>
@@ -312,59 +184,123 @@
                         <label class="form-label">Username Pelanggan</label>
                         <input type="text" class="form-control" id="usernameAktivasi" placeholder="user.pppoe" required autocomplete="off">
                     </div>
-                    <button type="submit" class="btn btn-orange" id="btnAktivasi">
-                        Run Activation <span class="inline-loader" id="loadAktivasi">↻</span>
-                    </button>
+                    <button type="submit" class="btn btn-orange" id="btnAktivasi">Run Activation</button>
                 </form>
+
+                <!-- TERMINAL SCANNER (AKTIVASI) -->
+                <div class="scanner-box" id="scannerAktivasi">
+                    <div class="scan-laser orange"></div>
+                    <div class="terminal-logs" id="logAktivasi"></div>
+                </div>
                 
-                <!-- HASIL AKTIVASI -->
+                <!-- HASIL -->
                 <div id="resultAktivasi" class="result-box"></div>
             </div>
         </div>
-
-    </div>
-
-    <!-- GLOBAL QUEUE STATUS INDICATOR -->
-    <div class="system-status" id="systemStatus">
-        <div class="status-dot dot-pulse" style="background:#d29922;"></div>
-        <span id="systemStatusText">Queue: 0 | Idle</span>
     </div>
 
     <script>
-        // 1. SIMPLE TAB SWITCHING
+        // 1. TABS
         const tabBtns = document.querySelectorAll('.tab-btn');
         const panels = document.querySelectorAll('.panel');
-
         tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 const target = btn.getAttribute('data-tab');
-                
                 tabBtns.forEach(b => b.classList.remove('active'));
                 panels.forEach(p => p.classList.remove('active'));
-                
                 btn.classList.add('active');
                 document.getElementById(`panel${target}`).classList.add('active');
             });
         });
 
-        // 2. LOAD SERVERS (Native Select)
+        // 2. LOAD SERVERS
         async function loadServers() {
             try {
                 const res = await fetch('/api/servers');
                 const data = await res.json();
                 const selCek = document.getElementById('serverCek');
                 const selAkt = document.getElementById('serverAktivasi');
-                
                 data.servers.forEach(srv => {
                     selCek.add(new Option(srv.label, srv.key));
                     selAkt.add(new Option(srv.label, srv.key));
                 });
-            } catch (err) {
-                console.warn("Gagal memuat server (API offline)");
-            }
+            } catch (err) {}
         }
 
-        // 3. OLT PARSER UTILITY
+        // 3. FUNGSI TERMINAL LOG ANIMATION
+        let logIntervals = {};
+        
+        const dummyLogsCek = [
+            "Initializing connection protocol...",
+            "Resolving server credentials...",
+            "Pinging OLT node...",
+            "Querying ONU interface...",
+            "Reading optical module TX/RX...",
+            "Parsing attenuation data...",
+            "Finalizing output..."
+        ];
+
+        const dummyLogsAkt = [
+            "Connecting to Mikrotik API...",
+            "Searching PPPoE active profile...",
+            "Checking firewall address-list...",
+            "Removing isolir rules...",
+            "Restarting client interface...",
+            "Verifying connectivity...",
+            "Finalizing activation..."
+        ];
+
+        function startScanner(target, isAktivasi) {
+            const scannerBox = document.getElementById(`scanner${target}`);
+            const logBox = document.getElementById(`log${target}`);
+            scannerBox.classList.add('show');
+            logBox.innerHTML = '';
+            
+            const logsArray = isAktivasi ? dummyLogsAkt : dummyLogsCek;
+            let step = 0;
+
+            // Generate initial line
+            printLogLine(logBox, "> Establish secure connection...");
+
+            logIntervals[target] = setInterval(() => {
+                if (step < logsArray.length) {
+                    printLogLine(logBox, `> ${logsArray[step]}`);
+                    step++;
+                }
+            }, 800); // Muncul log baru tiap 0.8 detik
+        }
+
+        function printLogLine(container, text, isQueue = false) {
+            // Remove active class and cursor from previous lines
+            const prevLines = container.querySelectorAll('.log-line');
+            prevLines.forEach(line => {
+                line.classList.remove('active');
+                const cursor = line.querySelector('.log-cursor');
+                if(cursor) cursor.remove();
+            });
+
+            // Keep max 4 lines visible so it doesn't overflow
+            if(prevLines.length > 3) {
+                prevLines[0].remove();
+            }
+
+            const div = document.createElement('div');
+            div.className = `log-line active ${isQueue ? 'log-queue' : ''}`;
+            div.innerHTML = `${text}<span class="log-cursor"></span>`;
+            container.appendChild(div);
+        }
+
+        function setQueueLog(target, position, wait) {
+            const logBox = document.getElementById(`log${target}`);
+            printLogLine(logBox, `[SYSTEM BUSY] Queued at pos #${position}... Est${wait}s`, true);
+        }
+
+        function stopScanner(target) {
+            if (logIntervals[target]) clearInterval(logIntervals[target]);
+            document.getElementById(`scanner${target}`).classList.remove('show');
+        }
+
+        // 4. OLT PARSER & BUILDER
         function parseOLTResult(oltText) {
             if(!oltText) return { oltName: 'Unknown', redaman: 'N/A', status: 'Unknown' };
             const lines = oltText.split('\n').filter(line => line.trim());
@@ -374,52 +310,29 @@
             return { oltName, redaman, status };
         }
 
-        // 4. HTML BUILDER UNTUK HASIL (TERMINAL STYLE)
         function buildDashboardResult(data, isAktivasi) {
             let html = '';
-            
-            // Banner Sukses
-            if(isAktivasi) {
-                html += `<div class="status-banner status-success">✓ [OK] Aktivasi ${data.status || 'Berhasil'}</div>`;
-            } else {
-                html += `<div class="status-banner status-success">✓ [OK] Query Selesai</div>`;
-            }
+            if(isAktivasi) html += `<div class="status-banner status-success">✓ [OK] Aktivasi ${data.status || 'Berhasil'}</div>`;
+            else html += `<div class="status-banner status-success">✓ [OK] Query Completed</div>`;
 
             html += `<div class="data-grid">`;
-            
-            // Detail Dasar
             html += `<div class="data-item"><div class="data-label">USERNAME</div><div class="data-value">${data.username || '-'}</div></div>`;
             html += `<div class="data-item"><div class="data-label">SERVER</div><div class="data-value">${data.server || '-'}</div></div>`;
-            
             if(data.ip) html += `<div class="data-item"><div class="data-label">IP ADDRESS</div><div class="data-value">${data.ip}</div></div>`;
             if(data.mac) html += `<div class="data-item"><div class="data-label">MAC ADDRESS</div><div class="data-value">${data.mac}</div></div>`;
-            if(data.paket) html += `<div class="data-item"><div class="data-label">PROFILE / PAKET</div><div class="data-value">${data.paket}</div></div>`;
+            if(data.paket) html += `<div class="data-item"><div class="data-label">PROFILE</div><div class="data-value">${data.paket}</div></div>`;
 
-            // Data OLT
             if (data.olt && data.olt !== 'ONU tidak ditemukan di OLT manapun') {
                 const olt = parseOLTResult(data.olt);
                 let rxColor = (olt.redaman.includes('-') && parseFloat(olt.redaman) < -25) ? 'value-red' : 'value-green';
-                
                 html += `<div class="data-item" style="grid-column: 1 / -1;"><div class="data-label">OLT NODE</div><div class="data-value">${olt.oltName}</div></div>`;
                 html += `<div class="data-item"><div class="data-label">RX POWER</div><div class="data-value ${rxColor}">${olt.redaman}</div></div>`;
                 html += `<div class="data-item"><div class="data-label">ONU STATUS</div><div class="data-value">${olt.status}</div></div>`;
             } else if (data.olt) {
                 html += `<div class="data-item" style="grid-column: 1 / -1; border-color:var(--danger-red);"><div class="data-label">OLT STATUS</div><div class="data-value value-red">ONU Not Found</div></div>`;
             }
-
             html += `</div>`;
             return html;
-        }
-
-        // 5. CORE PROCESS (SCAN / AKTIVASI)
-        let queuePollingInterval;
-
-        function setBtnLoading(btnId, loaderId, isLoading) {
-            const btn = document.getElementById(btnId);
-            const loader = document.getElementById(loaderId);
-            btn.disabled = isLoading;
-            if(isLoading) loader.classList.add('show');
-            else loader.classList.remove('show');
         }
 
         function renderError(targetDiv, errMsg) {
@@ -427,17 +340,23 @@
             targetDiv.classList.add('show');
         }
 
+        // 5. CORE PROCESS
+        let queuePollingInterval;
+
         async function processScan(action, serverKey, username) {
             const isAktivasi = action === 'aktivasi';
-            const resultDiv = document.getElementById(isAktivasi ? 'resultAktivasi' : 'resultCek');
-            const btnId = isAktivasi ? 'btnAktivasi' : 'btnCek';
-            const loaderId = isAktivasi ? 'loadAktivasi' : 'loadCek';
+            const targetName = isAktivasi ? 'Aktivasi' : 'Cek';
+            const resultDiv = document.getElementById(`result${targetName}`);
+            const btn = document.getElementById(`btn${targetName}`);
             const endpoint = isAktivasi ? '/api/aktivasi' : '/api/cek-redaman';
 
             resultDiv.classList.remove('show');
             resultDiv.innerHTML = '';
+            btn.disabled = true;
+            btn.innerHTML = 'Executing...';
             
-            setBtnLoading(btnId, loaderId, true);
+            // MULAILAH ANIMASI TERMINAL
+            startScanner(targetName, isAktivasi);
 
             try {
                 const res = await fetch(endpoint, { 
@@ -448,17 +367,15 @@
                 const data = await res.json();
                 
                 if (data.queued) {
-                    // Update global status indicator
-                    const statusUI = document.getElementById('systemStatus');
-                    const statusText = document.getElementById('systemStatusText');
-                    statusUI.classList.add('show');
-                    statusText.textContent = `Processing | Queue #${data.position}`;
-                    
-                    pollForResult(data.queueId, btnId, loaderId, resultDiv, isAktivasi);
+                    // Update terminal dengan status antrian
+                    setQueueLog(targetName, data.position, data.estimatedWait);
+                    pollForResult(data.queueId, targetName, resultDiv, isAktivasi, btn);
                     return;
                 }
                 
-                setBtnLoading(btnId, loaderId, false);
+                stopScanner(targetName);
+                btn.disabled = false;
+                btn.innerHTML = isAktivasi ? 'Run Activation' : 'Execute Scan';
                 
                 if (data.success) {
                     resultDiv.innerHTML = buildDashboardResult(data.data, isAktivasi);
@@ -467,13 +384,15 @@
                     renderError(resultDiv, data.error || 'Eksekusi gagal dilakukan.');
                 }
             } catch (err) {
-                setBtnLoading(btnId, loaderId, false);
+                stopScanner(targetName);
+                btn.disabled = false;
+                btn.innerHTML = isAktivasi ? 'Run Activation' : 'Execute Scan';
                 renderError(resultDiv, err.message);
             }
         }
 
-        // 6. POLLING UNTUK SISTEM ANTRIAN
-        async function pollForResult(queueId, btnId, loaderId, resultDiv, isAktivasi) {
+        // 6. POLLING
+        async function pollForResult(queueId, targetName, resultDiv, isAktivasi, btn) {
             queuePollingInterval = setInterval(async () => {
                 try {
                     const res = await fetch(`/api/queue-result/${queueId}`);
@@ -481,43 +400,37 @@
                     
                     if (data.status === 'done') {
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
-                        setBtnLoading(btnId, loaderId, false);
-                        document.getElementById('systemStatus').classList.remove('show');
+                        stopScanner(targetName);
+                        btn.disabled = false;
+                        btn.innerHTML = isAktivasi ? 'Run Activation' : 'Execute Scan';
                         
                         resultDiv.innerHTML = buildDashboardResult(data.data, isAktivasi);
                         resultDiv.classList.add('show');
                         
                     } else if (data.status === 'error') {
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
-                        setBtnLoading(btnId, loaderId, false);
-                        document.getElementById('systemStatus').classList.remove('show');
+                        stopScanner(targetName);
+                        btn.disabled = false;
+                        btn.innerHTML = isAktivasi ? 'Run Activation' : 'Execute Scan';
                         
                         renderError(resultDiv, data.error);
                     }
-                } catch (err) { 
-                    console.error('Polling error:', err); 
-                }
+                } catch (err) {}
             }, 2000);
         }
 
-        // 7. FORM SUBMITS
+        // 7. TRIGGERS
         document.getElementById('formCek').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const srv = document.getElementById('serverCek').value;
-            const usr = document.getElementById('usernameCek').value.trim();
-            await processScan('cek', srv, usr);
+            await processScan('cek', document.getElementById('serverCek').value, document.getElementById('usernameCek').value.trim());
         });
 
         document.getElementById('formAktivasi').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const srv = document.getElementById('serverAktivasi').value;
-            const usr = document.getElementById('usernameAktivasi').value.trim();
-            await processScan('aktivasi', srv, usr);
+            await processScan('aktivasi', document.getElementById('serverAktivasi').value, document.getElementById('usernameAktivasi').value.trim());
         });
 
-        // Initialize
         loadServers();
-
     </script>
 </body>
 </html>
