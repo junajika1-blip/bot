@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Alat NOC - Sunda Version</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Tambihan font khusus kode/hacker -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -23,6 +24,10 @@
             
             --radius: 6px; 
             --transition: 0.2s ease-in-out; 
+            
+            /* WARNA HACKER */
+            --hacker-green: #00ff41;
+            --hacker-dark: #008f11;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
@@ -36,27 +41,17 @@
             margin-bottom: 20px; 
         }
         
-        .marquee-container {
-            width: 100%;
-            overflow: hidden;
-            white-space: nowrap;
-            box-sizing: border-box;
-        }
-
+        .marquee-container { width: 100%; overflow: hidden; white-space: nowrap; box-sizing: border-box; }
         .marquee-text {
             display: inline-block;
             font-size: 16px;
             font-weight: 600;
             color: var(--accent-blue);
-            /* Ieu konci na ngarah asup ti luar layar katuhu lalaunan */
             padding-left: 100%; 
             animation: scrollMarquee 10s linear infinite;
         }
 
-        @keyframes scrollMarquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-100%); }
-        }
+        @keyframes scrollMarquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         /* TABS */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -84,52 +79,73 @@
         .btn-orange { background: var(--accent-orange); }
 
         /* ==========================================
-           TERMINAL SCANNER ANIMATION
+           TERMINAL SCANNER HACKER STYLE
         ========================================== */
         .scanner-box {
             display: none;
-            background: #010409;
-            border: 1px solid var(--border-color);
+            background: #000000; /* Hitam pekat */
+            /* Efek jaring-jaring Matrix halus */
+            background-image: 
+                linear-gradient(rgba(0, 255, 65, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 65, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            
+            border: 1px solid var(--hacker-dark);
             border-radius: var(--radius);
             margin-top: 20px;
             position: relative;
             overflow: hidden;
             padding: 15px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            box-shadow: inset 0 0 30px rgba(0,255,65,0.1), 0 0 15px rgba(0,255,65,0.2);
         }
         .scanner-box.show { display: block; animation: expandScanner 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        @keyframes expandScanner { from { max-height: 0; opacity: 0; } to { max-height: 200px; opacity: 1; } }
+        @keyframes expandScanner { from { max-height: 0; opacity: 0; } to { max-height: 250px; opacity: 1; } }
 
         .scan-laser {
             position: absolute;
             top: 0; left: 0;
             height: 2px;
-            width: 30%;
-            background: var(--accent-blue);
-            box-shadow: 0 0 10px var(--accent-blue), 0 0 20px var(--accent-blue);
-            animation: scanRadar 1.5s ease-in-out infinite alternate;
+            width: 100%;
+            background: var(--hacker-green);
+            box-shadow: 0 0 15px var(--hacker-green), 0 0 30px var(--hacker-green);
+            animation: scanRadar 2s ease-in-out infinite alternate;
+            opacity: 0.8;
         }
-        .scan-laser.orange { background: var(--accent-orange); box-shadow: 0 0 10px var(--accent-orange), 0 0 20px var(--accent-orange); }
-        
-        @keyframes scanRadar { 0% { left: -10%; } 100% { left: 80%; } }
+        /* Laser gerak ti luhur ka handap siga scanner asli */
+        @keyframes scanRadar { 0% { top: 0%; opacity: 0.2;} 50% { opacity: 1; } 100% { top: 100%; opacity: 0.2; } }
 
         .terminal-logs {
-            font-family: 'Fira Code', monospace;
-            font-size: 12px;
-            color: var(--text-muted);
-            line-height: 1.6;
-            min-height: 80px;
+            font-family: 'Space Mono', 'Fira Code', monospace; /* Font heker banget */
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--hacker-dark); /* Hejo poek jang text heubeul */
+            line-height: 1.7;
+            min-height: 100px;
+            text-shadow: 0 0 2px rgba(0, 143, 17, 0.5);
         }
-        .log-line { display: block; }
-        .log-line.active { color: #ffffff; text-shadow: 0 0 5px rgba(255,255,255,0.5); }
+        .log-line { display: block; transition: color 0.3s; opacity: 0.7; }
+        
+        .log-line.active { 
+            color: var(--hacker-green); /* Hejo nyaangkeun */
+            opacity: 1;
+            /* Efek Glow */
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.8), 0 0 15px rgba(0, 255, 65, 0.5); 
+        }
+        
         .log-cursor {
-            display: inline-block; width: 6px; height: 12px; background: #ffffff;
-            margin-left: 5px; vertical-align: middle; animation: blink 1s step-end infinite;
+            display: inline-block; 
+            width: 8px; 
+            height: 15px; 
+            background: var(--hacker-green);
+            box-shadow: 0 0 8px var(--hacker-green);
+            margin-left: 6px; 
+            vertical-align: middle; 
+            animation: blinkHacker 1s step-end infinite;
         }
-        @keyframes blink { 50% { opacity: 0; } }
+        @keyframes blinkHacker { 50% { opacity: 0; } }
 
-        .log-queue { color: #d29922; font-weight: 600; }
+        .log-queue { color: #f0883e; text-shadow: 0 0 5px #f0883e; }
 
         /* RESULTS DATA GRID */
         .result-box { margin-top: 20px; border-top: 1px dashed var(--border-color); padding-top: 20px; display: none; }
@@ -176,7 +192,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Username Pelanggan</label>
-                        <input type="text" class="form-control" id="usernameCek" placeholder="WAN" required autocomplete="off">
+                        <input type="text" class="form-control" id="usernameCek" placeholder="user.pppoe" required autocomplete="off">
                     </div>
                     <button type="submit" class="btn btn-blue" id="btnCek">Scan</button>
                 </form>
@@ -204,14 +220,14 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Username Pelanggan</label>
-                        <input type="text" class="form-control" id="usernameAktivasi" placeholder="WAN" required autocomplete="off">
+                        <input type="text" class="form-control" id="usernameAktivasi" placeholder="user.pppoe" required autocomplete="off">
                     </div>
                     <button type="submit" class="btn btn-orange" id="btnAktivasi">Aktipkeun</button>
                 </form>
 
                 <!-- TERMINAL SCANNER (AKTIVASI) -->
                 <div class="scanner-box" id="scannerAktivasi">
-                    <div class="scan-laser orange"></div>
+                    <div class="scan-laser"></div> <!-- Saruakeun hejo ngarah siga alat hacker -->
                     <div class="terminal-logs" id="logAktivasi"></div>
                 </div>
                 
@@ -249,7 +265,7 @@
             } catch (err) {}
         }
 
-        // 3. FUNGSI TERMINAL LOG ANIMATION (Basa Sunda)
+        // 3. FUNGSI TERMINAL LOG HACKER (Basa Sunda)
         let logIntervals = {};
         
         const dummyLogsCek = [
@@ -281,14 +297,17 @@
             const logsArray = isAktivasi ? dummyLogsAkt : dummyLogsCek;
             let step = 0;
 
-            printLogLine(logBox, "> Nyambungkeun kana sistem aman...");
+            printLogLine(logBox, "> BYPASSING SECURITY LAYER...");
+            setTimeout(() => {
+                printLogLine(logBox, "> Nyambungkeun kana sistem aman...");
+            }, 400);
 
             logIntervals[target] = setInterval(() => {
                 if (step < logsArray.length) {
                     printLogLine(logBox, `> ${logsArray[step]}`);
                     step++;
                 }
-            }, 800);
+            }, 700); // Rodo di-gancangkeun sangkan lincah
         }
 
         function printLogLine(container, text, isQueue = false) {
@@ -299,7 +318,8 @@
                 if(cursor) cursor.remove();
             });
 
-            if(prevLines.length > 3) {
+            // Neundeun 4 baris log sangkan katingali prosés ka handapna
+            if(prevLines.length > 4) {
                 prevLines[0].remove();
             }
 
