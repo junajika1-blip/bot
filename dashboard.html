@@ -29,32 +29,34 @@
         body { background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 15px; }
         .container { max-width: 600px; margin: 0 auto; }
 
-        /* HEADER EFEK NGETIK (TYPEWRITER) */
+        /* HEADER ANIMASI BERJALAN (MARQUEE MULUS) */
         .header { 
             padding-bottom: 15px; 
             border-bottom: 1px solid var(--border-color); 
             margin-bottom: 20px; 
-            display: flex;
-            align-items: center;
-            min-height: 45px;
         }
         
-        .typewriter-text {
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            box-sizing: border-box;
+        }
+
+        .marquee-text {
+            display: inline-block;
             font-size: 16px;
             font-weight: 600;
             color: var(--accent-blue);
-            font-family: 'Fira Code', monospace; /* Pake font kode ngarah ngetikna rapih */
+            /* Ieu konci na ngarah asup ti luar layar katuhu lalaunan */
+            padding-left: 100%; 
+            animation: scrollMarquee 10s linear infinite;
         }
 
-        .cursor {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--accent-blue);
-            animation: blink 0.8s step-end infinite;
-            margin-left: 2px;
+        @keyframes scrollMarquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
         }
-
-        @keyframes blink { 50% { opacity: 0; } }
 
         /* TABS */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -125,6 +127,7 @@
             display: inline-block; width: 6px; height: 12px; background: #ffffff;
             margin-left: 5px; vertical-align: middle; animation: blink 1s step-end infinite;
         }
+        @keyframes blink { 50% { opacity: 0; } }
 
         .log-queue { color: #d29922; font-weight: 600; }
 
@@ -148,10 +151,10 @@
 <body>
 
     <div class="container">
-        <!-- HEADER TYPEWRITER -->
+        <!-- HEADER MARQUEE -->
         <div class="header">
-            <div>
-                <span id="typewriterText" class="typewriter-text"></span><span class="cursor">_</span>
+            <div class="marquee-container">
+                <div class="marquee-text">Parios Redaman & Aktivasi Isolir</div>
             </div>
         </div>
 
@@ -219,29 +222,7 @@
     </div>
 
     <script>
-        // 1. ANIMASI HEADER TYPEWRITER (Ngetik)
-        const textToType = "Parios Redaman & Aktivasi Isolir";
-        const typeTarget = document.getElementById("typewriterText");
-        let typeIndex = 0;
-
-        function typeWriter() {
-            if (typeIndex < textToType.length) {
-                typeTarget.innerHTML += textToType.charAt(typeIndex);
-                typeIndex++;
-                setTimeout(typeWriter, 100); // Kacepetan ngetik (100ms per huruf)
-            } else {
-                // Sanggeus rengse ngetik, usap deui sanggeus 8 detik tuluy ngulang (opsional)
-                setTimeout(() => {
-                    typeTarget.innerHTML = '';
-                    typeIndex = 0;
-                    typeWriter();
-                }, 8000); 
-            }
-        }
-        // Ngamimitian animasi ngetik sanggeus 0.5 detik halaman dimuat
-        setTimeout(typeWriter, 500);
-
-        // 2. TABS
+        // 1. TABS
         const tabBtns = document.querySelectorAll('.tab-btn');
         const panels = document.querySelectorAll('.panel');
         tabBtns.forEach(btn => {
@@ -254,7 +235,7 @@
             });
         });
 
-        // 3. LOAD SERVERS
+        // 2. LOAD SERVERS
         async function loadServers() {
             try {
                 const res = await fetch('/api/servers');
@@ -268,7 +249,7 @@
             } catch (err) {}
         }
 
-        // 4. FUNGSI TERMINAL LOG ANIMATION (Basa Sunda)
+        // 3. FUNGSI TERMINAL LOG ANIMATION (Basa Sunda)
         let logIntervals = {};
         
         const dummyLogsCek = [
@@ -338,7 +319,7 @@
             document.getElementById(`scanner${target}`).classList.remove('show');
         }
 
-        // 5. OLT PARSER & BUILDER (Basa Sunda)
+        // 4. OLT PARSER & BUILDER (Basa Sunda)
         function parseOLTResult(oltText) {
             if(!oltText) return { oltName: 'Teu Kanyahoan', redaman: 'N/A', status: 'Teu Kanyahoan' };
             const lines = oltText.split('\n').filter(line => line.trim());
@@ -350,7 +331,6 @@
 
         function buildDashboardResult(data, isAktivasi) {
             let html = '';
-            // Robah jadi Rengse ✓
             html += `<div class="status-banner status-success">Rengse ✓</div>`;
 
             html += `<div class="data-grid">`;
@@ -378,7 +358,7 @@
             targetDiv.classList.add('show');
         }
 
-        // 6. CORE PROCESS
+        // 5. CORE PROCESS
         let queuePollingInterval;
 
         async function processScan(action, serverKey, username) {
@@ -427,7 +407,7 @@
             }
         }
 
-        // 7. POLLING
+        // 6. POLLING
         async function pollForResult(queueId, targetName, resultDiv, isAktivasi, btn) {
             queuePollingInterval = setInterval(async () => {
                 try {
@@ -455,7 +435,7 @@
             }, 2000);
         }
 
-        // 8. TRIGGERS
+        // 7. TRIGGERS
         document.getElementById('formCek').addEventListener('submit', async (e) => {
             e.preventDefault();
             await processScan('cek', document.getElementById('serverCek').value, document.getElementById('usernameCek').value.trim());
