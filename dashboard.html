@@ -10,16 +10,19 @@
     
     <style>
         :root {
-            --royal-blue: #2E5BFF;
-            --indigo: #5C32FF;
-            --electric-purple: #8A2BE2;
-            --pink-glow: #FF2E93;
-            --accent-cyan: #00F0FF;
-            --glass-white: rgba(255, 255, 255, 0.15);
-            --glass-border: rgba(255, 255, 255, 0.25);
-            --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            --text-main: #FFFFFF;
-            --text-muted: rgba(255, 255, 255, 0.6);
+            /* TEMA ADMIN TEKNISI / PRO DASHBOARD */
+            --bg-dark: #09090b; /* Hitam pekat Carbon */
+            --tech-blue: #2563eb; /* Biru khas dashboard monitoring */
+            --cyan-glow: #06b6d4; /* Cyan terang ala fiber / laser */
+            --warning-orange: #f97316; /* Oranye industrial / splicer */
+            --emerald-green: #10b981; /* Hijau terminal / Status ON */
+            
+            --glass-white: rgba(30, 41, 59, 0.65); /* Kaca gelap (Dark Slate) */
+            --glass-border: rgba(255, 255, 255, 0.08); /* Border tipis lebih redup */
+            --glass-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            --text-main: #f8fafc; /* Putih keabu-abuan (tidak menyilaukan) */
+            --text-muted: #94a3b8;
+            
             --spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
             --smooth: cubic-bezier(0.4, 0, 0.2, 1);
             --safe-top: env(safe-area-inset-top, 40px);
@@ -29,7 +32,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'SF Pro Display', 'Inter', sans-serif; }
         
         body {
-            background-color: #0f0f13;
+            background-color: var(--bg-dark);
             color: var(--text-main);
             overflow-x: hidden;
             overscroll-behavior-y: none;
@@ -37,14 +40,15 @@
             min-height: 100vh;
         }
 
-        /* AURORA BACKGROUND & NOISE */
-        .bg-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; overflow: hidden; background: #0f0f13; }
-        .aurora-blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.6; animation: float 20s infinite ease-in-out alternate; }
-        .blob-1 { top: -10%; left: -10%; width: 60vw; height: 60vw; background: var(--royal-blue); animation-delay: 0s; }
-        .blob-2 { top: 40%; right: -20%; width: 70vw; height: 70vw; background: var(--electric-purple); animation-delay: -5s; }
-        .blob-3 { bottom: -20%; left: 20%; width: 50vw; height: 50vw; background: var(--indigo); animation-delay: -10s; }
-        .blob-4 { top: 20%; left: 30%; width: 40vw; height: 40vw; background: var(--pink-glow); opacity: 0.4; animation-delay: -15s; }
-        .noise-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.4; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
+        /* SERVER ROOM GLOW BACKGROUND (MENGGANTIKAN AURORA) */
+        .bg-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; overflow: hidden; background: var(--bg-dark); }
+        .aurora-blob { position: absolute; border-radius: 50%; filter: blur(100px); animation: float 20s infinite ease-in-out alternate; }
+        .blob-1 { top: -10%; left: -10%; width: 60vw; height: 60vw; background: var(--tech-blue); animation-delay: 0s; opacity: 0.25; }
+        .blob-2 { top: 40%; right: -20%; width: 70vw; height: 70vw; background: var(--emerald-green); animation-delay: -5s; opacity: 0.15; }
+        .blob-3 { bottom: -20%; left: 20%; width: 50vw; height: 50vw; background: var(--cyan-glow); animation-delay: -10s; opacity: 0.15; }
+        .blob-4 { top: 20%; left: 30%; width: 40vw; height: 40vw; background: var(--warning-orange); opacity: 0.1; animation-delay: -15s; }
+        
+        .noise-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; opacity: 0.5; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E"); }
         .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 50% { transform: translate(10vw, 10vh) scale(1.1); } 100% { transform: translate(-5vw, 15vh) scale(0.9); } }
