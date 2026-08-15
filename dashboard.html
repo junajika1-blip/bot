@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="su">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RnBNET - NOC Tools</title>
+    <title>Alat NOC - Sunda Version</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     
     <style>
@@ -29,10 +29,35 @@
         body { background-color: var(--bg-body); color: var(--text-main); line-height: 1.5; padding: 15px; }
         .container { max-width: 600px; margin: 0 auto; }
 
-        /* HEADER */
-        .header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
-        .header-title { font-size: 18px; font-weight: 700; color: #ffffff; display: flex; align-items: center; gap: 10px; }
-        .header-badge { background: rgba(47, 129, 247, 0.15); color: var(--accent-blue); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: 'Fira Code', monospace; border: 1px solid rgba(47, 129, 247, 0.3); }
+        /* HEADER ANIMASI BERJALAN */
+        .header { 
+            padding-bottom: 15px; 
+            border-bottom: 1px solid var(--border-color); 
+            margin-bottom: 20px; 
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+        
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .marquee-text {
+            display: inline-block;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-blue);
+            animation: scrollMarquee 12s linear infinite;
+        }
+
+        @keyframes scrollMarquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
 
         /* TABS */
         .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
@@ -60,7 +85,7 @@
         .btn-orange { background: var(--accent-orange); }
 
         /* ==========================================
-           TERMINAL SCANNER ANIMATION (BARU)
+           TERMINAL SCANNER ANIMATION
         ========================================== */
         .scanner-box {
             display: none;
@@ -129,17 +154,15 @@
     <div class="container">
         <!-- HEADER -->
         <div class="header">
-            <div class="header-title">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-                RnBNET NOC
+            <div class="marquee-container">
+                <div class="marquee-text">Parios Redaman & Aktivasi Isolir</div>
             </div>
-            <div class="header-badge">Terminal v2.0</div>
         </div>
 
         <!-- TABS NAV -->
         <div class="tabs">
-            <button class="tab-btn active" data-tab="0">Cek Redaman</button>
-            <button class="tab-btn" data-tab="1">Aktivasi Isolir</button>
+            <button class="tab-btn active" data-tab="0">Parios Redaman</button>
+            <button class="tab-btn" data-tab="1">Aktipkeun Isolir</button>
         </div>
 
         <!-- TAB 0: CEK REDAMAN -->
@@ -149,14 +172,14 @@
                     <div class="form-group">
                         <label class="form-label">Pilih Server OLT</label>
                         <select class="form-control" id="serverCek" required>
-                            <option value="">-- Dropdown Server --</option>
+                            <option value="">-- Pilih Server --</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Username Pelanggan</label>
                         <input type="text" class="form-control" id="usernameCek" placeholder="user.pppoe" required autocomplete="off">
                     </div>
-                    <button type="submit" class="btn btn-blue" id="btnCek">Execute Scan</button>
+                    <button type="submit" class="btn btn-blue" id="btnCek">Scan</button>
                 </form>
 
                 <!-- TERMINAL SCANNER (CEK) -->
@@ -177,14 +200,14 @@
                     <div class="form-group">
                         <label class="form-label">Pilih Server Mikrotik</label>
                         <select class="form-control" id="serverAktivasi" required>
-                            <option value="">-- Dropdown Server --</option>
+                            <option value="">-- Pilih Server --</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Username Pelanggan</label>
                         <input type="text" class="form-control" id="usernameAktivasi" placeholder="user.pppoe" required autocomplete="off">
                     </div>
-                    <button type="submit" class="btn btn-orange" id="btnAktivasi">Run Activation</button>
+                    <button type="submit" class="btn btn-orange" id="btnAktivasi">Aktipkeun</button>
                 </form>
 
                 <!-- TERMINAL SCANNER (AKTIVASI) -->
@@ -227,27 +250,27 @@
             } catch (err) {}
         }
 
-        // 3. FUNGSI TERMINAL LOG ANIMATION
+        // 3. FUNGSI TERMINAL LOG ANIMATION (Basa Sunda)
         let logIntervals = {};
         
         const dummyLogsCek = [
-            "Initializing connection protocol...",
-            "Resolving server credentials...",
-            "Pinging OLT node...",
-            "Querying ONU interface...",
-            "Reading optical module TX/RX...",
-            "Parsing attenuation data...",
-            "Finalizing output..."
+            "Ngamimitian protokol koneksi...",
+            "Mariksa sandi server...",
+            "Nge-ping ka node OLT...",
+            "Neang data interface ONU...",
+            "Maca modul optik TX/RX...",
+            "Ngitung data redaman...",
+            "Nyiapkeun hasil..."
         ];
 
         const dummyLogsAkt = [
-            "Connecting to Mikrotik API...",
-            "Searching PPPoE active profile...",
-            "Checking firewall address-list...",
-            "Removing isolir rules...",
-            "Restarting client interface...",
-            "Verifying connectivity...",
-            "Finalizing activation..."
+            "Nyambung ka Mikrotik API...",
+            "Milarian profil PPPoE aktif...",
+            "Mariksa address-list firewall...",
+            "Mupus aturan isolir...",
+            "Ngamimitian deui interface klien...",
+            "Mastikeun koneksi jalan...",
+            "Ngapihkeun aktivasi..."
         ];
 
         function startScanner(target, isAktivasi) {
@@ -260,18 +283,17 @@
             let step = 0;
 
             // Generate initial line
-            printLogLine(logBox, "> Establish secure connection...");
+            printLogLine(logBox, "> Nyambungkeun kana sistem aman...");
 
             logIntervals[target] = setInterval(() => {
                 if (step < logsArray.length) {
                     printLogLine(logBox, `> ${logsArray[step]}`);
                     step++;
                 }
-            }, 800); // Muncul log baru tiap 0.8 detik
+            }, 800);
         }
 
         function printLogLine(container, text, isQueue = false) {
-            // Remove active class and cursor from previous lines
             const prevLines = container.querySelectorAll('.log-line');
             prevLines.forEach(line => {
                 line.classList.remove('active');
@@ -279,7 +301,6 @@
                 if(cursor) cursor.remove();
             });
 
-            // Keep max 4 lines visible so it doesn't overflow
             if(prevLines.length > 3) {
                 prevLines[0].remove();
             }
@@ -292,7 +313,7 @@
 
         function setQueueLog(target, position, wait) {
             const logBox = document.getElementById(`log${target}`);
-            printLogLine(logBox, `[SYSTEM BUSY] Queued at pos #${position}... Est${wait}s`, true);
+            printLogLine(logBox, `[SISTEM SIBUK] Ngantri di posisi #${position}... Antos ${wait} detik`, true);
         }
 
         function stopScanner(target) {
@@ -300,43 +321,43 @@
             document.getElementById(`scanner${target}`).classList.remove('show');
         }
 
-        // 4. OLT PARSER & BUILDER
+        // 4. OLT PARSER & BUILDER (Basa Sunda)
         function parseOLTResult(oltText) {
-            if(!oltText) return { oltName: 'Unknown', redaman: 'N/A', status: 'Unknown' };
+            if(!oltText) return { oltName: 'Teu Kanyahoan', redaman: 'N/A', status: 'Teu Kanyahoan' };
             const lines = oltText.split('\n').filter(line => line.trim());
             const oltName = lines[0]?.replace(/[✅*]/g, '').trim() || 'OLT';
             const redaman = lines[1]?.match(/Redaman:\s*\*?([^\*]*)\*?/)?.[1].trim() || 'N/A';
-            const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Unknown';
+            const status = lines[2]?.match(/Status:\s*(.*)/)?.[1].trim() || 'Teu Kanyahoan';
             return { oltName, redaman, status };
         }
 
         function buildDashboardResult(data, isAktivasi) {
             let html = '';
-            if(isAktivasi) html += `<div class="status-banner status-success">✓ [OK] Aktivasi ${data.status || 'Berhasil'}</div>`;
-            else html += `<div class="status-banner status-success">✓ [OK] Query Completed</div>`;
+            if(isAktivasi) html += `<div class="status-banner status-success">Rengse ✓ [Aktivasi Sukses]</div>`;
+            else html += `<div class="status-banner status-success">Rengse ✓</div>`;
 
             html += `<div class="data-grid">`;
             html += `<div class="data-item"><div class="data-label">USERNAME</div><div class="data-value">${data.username || '-'}</div></div>`;
             html += `<div class="data-item"><div class="data-label">SERVER</div><div class="data-value">${data.server || '-'}</div></div>`;
             if(data.ip) html += `<div class="data-item"><div class="data-label">IP ADDRESS</div><div class="data-value">${data.ip}</div></div>`;
             if(data.mac) html += `<div class="data-item"><div class="data-label">MAC ADDRESS</div><div class="data-value">${data.mac}</div></div>`;
-            if(data.paket) html += `<div class="data-item"><div class="data-label">PROFILE</div><div class="data-value">${data.paket}</div></div>`;
+            if(data.paket) html += `<div class="data-item"><div class="data-label">PROFIL / PAKET</div><div class="data-value">${data.paket}</div></div>`;
 
             if (data.olt && data.olt !== 'ONU tidak ditemukan di OLT manapun') {
                 const olt = parseOLTResult(data.olt);
                 let rxColor = (olt.redaman.includes('-') && parseFloat(olt.redaman) < -25) ? 'value-red' : 'value-green';
-                html += `<div class="data-item" style="grid-column: 1 / -1;"><div class="data-label">OLT NODE</div><div class="data-value">${olt.oltName}</div></div>`;
-                html += `<div class="data-item"><div class="data-label">RX POWER</div><div class="data-value ${rxColor}">${olt.redaman}</div></div>`;
-                html += `<div class="data-item"><div class="data-label">ONU STATUS</div><div class="data-value">${olt.status}</div></div>`;
+                html += `<div class="data-item" style="grid-column: 1 / -1;"><div class="data-label">Ngaran OLT</div><div class="data-value">${olt.oltName}</div></div>`;
+                html += `<div class="data-item"><div class="data-label">REDAMAN (RX)</div><div class="data-value ${rxColor}">${olt.redaman}</div></div>`;
+                html += `<div class="data-item"><div class="data-label">STATUS ONU</div><div class="data-value">${olt.status}</div></div>`;
             } else if (data.olt) {
-                html += `<div class="data-item" style="grid-column: 1 / -1; border-color:var(--danger-red);"><div class="data-label">OLT STATUS</div><div class="data-value value-red">ONU Not Found</div></div>`;
+                html += `<div class="data-item" style="grid-column: 1 / -1; border-color:var(--danger-red);"><div class="data-label">STATUS OLT</div><div class="data-value value-red">ONU Teu Kapendak</div></div>`;
             }
             html += `</div>`;
             return html;
         }
 
         function renderError(targetDiv, errMsg) {
-            targetDiv.innerHTML = `<div class="status-banner status-error">✗ [ERROR] ${errMsg}</div>`;
+            targetDiv.innerHTML = `<div class="status-banner status-error">✗ [GAGAL] ${errMsg}</div>`;
             targetDiv.classList.add('show');
         }
 
@@ -353,9 +374,8 @@
             resultDiv.classList.remove('show');
             resultDiv.innerHTML = '';
             btn.disabled = true;
-            btn.innerHTML = 'Executing...';
+            btn.innerHTML = 'Nuju Proses...';
             
-            // MULAILAH ANIMASI TERMINAL
             startScanner(targetName, isAktivasi);
 
             try {
@@ -367,7 +387,6 @@
                 const data = await res.json();
                 
                 if (data.queued) {
-                    // Update terminal dengan status antrian
                     setQueueLog(targetName, data.position, data.estimatedWait);
                     pollForResult(data.queueId, targetName, resultDiv, isAktivasi, btn);
                     return;
@@ -375,18 +394,18 @@
                 
                 stopScanner(targetName);
                 btn.disabled = false;
-                btn.innerHTML = isAktivasi ? 'Run Activation' : 'Execute Scan';
+                btn.innerHTML = isAktivasi ? 'Aktipkeun' : 'Scan';
                 
                 if (data.success) {
                     resultDiv.innerHTML = buildDashboardResult(data.data, isAktivasi);
                     resultDiv.classList.add('show');
                 } else {
-                    renderError(resultDiv, data.error || 'Eksekusi gagal dilakukan.');
+                    renderError(resultDiv, data.error || 'Proses gagal dilaksanakeun.');
                 }
             } catch (err) {
                 stopScanner(targetName);
                 btn.disabled = false;
-                btn.innerHTML = isAktivasi ? 'Run Activation' : 'Execute Scan';
+                btn.innerHTML = isAktivasi ? 'Aktipkeun' : 'Scan';
                 renderError(resultDiv, err.message);
             }
         }
@@ -402,7 +421,7 @@
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
                         stopScanner(targetName);
                         btn.disabled = false;
-                        btn.innerHTML = isAktivasi ? 'Run Activation' : 'Execute Scan';
+                        btn.innerHTML = isAktivasi ? 'Aktipkeun' : 'Scan';
                         
                         resultDiv.innerHTML = buildDashboardResult(data.data, isAktivasi);
                         resultDiv.classList.add('show');
@@ -411,7 +430,7 @@
                         clearInterval(queuePollingInterval); queuePollingInterval = null; 
                         stopScanner(targetName);
                         btn.disabled = false;
-                        btn.innerHTML = isAktivasi ? 'Run Activation' : 'Execute Scan';
+                        btn.innerHTML = isAktivasi ? 'Aktipkeun' : 'Scan';
                         
                         renderError(resultDiv, data.error);
                     }
